@@ -24,7 +24,7 @@ globalID=dataTable.INDDID;
 
 singleID=unique(globalID);
 
-
+%initializing collection vectors for real this time
 slopeCollect=nan(1, length(singleID));
 startScore=nan(1, length(singleID));
 year2DecCollect=nan(1, length(singleID));
