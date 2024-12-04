@@ -1,4 +1,4 @@
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis')
+addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
 
 
 

@@ -1,6 +1,6 @@
 %basic check of rs199347 frequency and cognitive decline
 
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis')
+addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
 
 
 %% reading in data
@@ -90,7 +90,7 @@ end
 %% Plotting some basic clinical metrics
 
 cellfun(@isempty, diagCollect)
-
+%setting up diff disease subgroups
 Parkinson= (contains(diagCollect, 'Parkinson'));
 Alzheimer= (contains(diagCollect, 'Alzheimer'));
 ALS= (contains(diagCollect, 'Amyotrophic'));
