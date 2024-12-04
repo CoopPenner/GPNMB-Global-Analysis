@@ -1,6 +1,6 @@
 %basic check of rs199347 frequency and cognitive decline
 
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
+addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis')
 
 
 %% reading in data
@@ -89,8 +89,8 @@ end
 
 %% Plotting some basic clinical metrics
 
-cellfun(@isempty, diagCollect)
-%setting up diff disease subgroups
+~isempty(diagCollect)
+
 Parkinson= (contains(diagCollect, 'Parkinson'));
 Alzheimer= (contains(diagCollect, 'Alzheimer'));
 ALS= (contains(diagCollect, 'Amyotrophic'));
@@ -122,10 +122,10 @@ histogram(slopeCollect((het)),'BinWidth',1, 'FaceColor','g')
 xlabel('MOCA slope')
 
 
-pt2Plot=[Parkinson];
+pt2Plot=[neuroPanel];
 val2Plot=slopeCollect;
 SNP=snpCollect;
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<10 ;
+remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<15 ;
 
 figure
 b=bar(1,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot )))  ;
@@ -162,7 +162,7 @@ c.CData(1,:) = [0.3 0.1 .6];
 legend({'AA (over Production)', 'GC','GG (under Production)'})
 
 
-pt2Plot=Parkinson
+pt2Plot=Alzheimer
 
 
 
