@@ -57,6 +57,8 @@ snpPlotterGPNMB(GPNMBSNP,disDur, Alzheimer, 'Disease Duration', 'Alzheimer"s Dis
 subplot(2,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, Alzheimer, 'Age At Onset', 'Alzheimer"s Disease')
 subplot(2,2,3:4)
+
+figure
 % this step runs a permutation 
 [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,Alzheimer, 'Alzheimer"s', 'rs199347', 10000,1,'true');
 

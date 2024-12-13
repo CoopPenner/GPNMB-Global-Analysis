@@ -1,6 +1,6 @@
 %basic check of rs199347 frequency and cognitive decline
 
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis')
+addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
 
 
 %% reading in data
@@ -12,15 +12,31 @@ if dataRead
 
 %reading in all of our data
 
-dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_WithMoca_11_24.xlsx');
+%MOCA
+ %dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_WithMoca_11_24.xlsx');
+
+%BNT
+% dataTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_extraSNP_BNT.xlsx');
+
+%MMSE *
+ dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_extraSNP_withMMSE.xlsx');
+
+% DRS
+
+ %dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_extraSNP_DRS.xlsx');
+
 end
 
-cogScore=dataTable.MoCATotal;
+%cogScore=dataTable.MoCATotal;
+cogScore=dataTable.MMSETotal;
+%cogScore=dataTable.DRSTotalAge;
 testDate=dataTable.TestDate;
 dx=dataTable.GlobalDx;
-ageATTest=dataTable.AgeatTest;
 snpAtPlay=dataTable.rs199347;
 globalID=dataTable.INDDID;
+Edu=dataTable.Education;
+Sex=dataTable.Sex;
+ageATTest=dataTable.AgeatTest;
 
 singleID=unique(globalID);
 
@@ -30,7 +46,13 @@ startScore=nan(1, length(singleID));
 year2DecCollect=nan(1, length(singleID));
 diagCollect=cell(1, length(singleID));
 snpCollect=cell(1, length(singleID));
-ageAtTest=nan(1, length(singleID));
+ageAtTestCollect=nan(1, length(singleID));
+edCollect=nan(1, length(singleID));
+sexCollect=cell(1, length(singleID));
+emptyIndex=false(1, length(singleID));
+IDCollect=startScore;
+
+
 
 for tt= 1:length(singleID) %iterating through each patient in the dataset
 
@@ -52,7 +74,7 @@ allTime=testYear+testMonth;
         allTime((isnan(relScores)))=[];
         relScores(isnan(relScores))=[]; 
         [uniqueA, i,j] = unique(allTime,'first');
-        idxToRemove = find(not(ismember(1:numel(allTime),i)))   ;
+        idxToRemove = find(not(ismember(1:numel(allTime),i))  | relScores'>30 )   ;
         allTime(idxToRemove)=[]; relScores(idxToRemove)=[]; %sometimes for some reason there are duplicate times
         allTime=allTime/12; %everything contextualized in years, since that is the standard by which slopes are presented
 
@@ -67,6 +89,12 @@ end
 
         diagCollect(tt)=unique(dx(globalID==singleID(tt)));
         snpCollect(tt)=unique(snpAtPlay(globalID==singleID(tt)));
+
+allAge=ageATTest(globalID==singleID(tt)   ) ;  ageAtTestCollect(tt)= mean(allAge, "omitnan")  ; %I take the age at first test
+allEd=Edu(globalID==singleID(tt)); edCollect(tt)=allEd(1); % I take the starting educational attainment
+sexCollect(tt)=unique(Sex(globalID==singleID(tt))); %no categorization available in database for intersex individuals
+IDCollect(tt)= singleID(tt);
+
         % ageAtTest(tt)=ageAtTest(globalID==globalID(tt)) ;
 
             if ~isempty(sigChange)      
@@ -77,10 +105,17 @@ end
         startScore(tt)=relScores(1); %collect starting point
            
         else
-              slopeCollect(tt)=nan;
+                slopeCollect(tt)=nan;
+                IDCollect(tt)= nan;
+                ageAtTestCollect(tt)=nan;
+                edCollect(tt)=nan;
                 diagCollect{tt}='nan';
                 snpCollect{tt}='nan';
+                sexCollect{tt}='nan';
         
+
+                emptyIndex(tt)=true;
+
         end
 
 end
@@ -89,10 +124,10 @@ end
 
 %% Plotting some basic clinical metrics
 
-~isempty(diagCollect)
-
+cellfun(@isempty, diagCollect)
+%setting up diff disease subgroups
 Parkinson= (contains(diagCollect, 'Parkinson'));
-Alzheimer= (contains(diagCollect, 'Alzheimer'));
+Alzheimer= (contains(diagCollect, 'Alzheimer')   )  ;
 ALS= (contains(diagCollect, 'Amyotrophic'));
 DemLewy= (contains(diagCollect, 'Dementia with Lewy Bodies')); 
 MCI= (contains(diagCollect, 'Mild cognitive impairment')); 
@@ -100,8 +135,8 @@ corticoBasal= (contains(diagCollect, 'Corticobasal syndrome'));
 bvFTD= (contains(diagCollect, 'bvFTD-FTLD')); 
 PPA= (contains(diagCollect, 'PPA')); 
 supraNuc= (contains(diagCollect, 'Progressive supranuclear palsy')); 
-neuroPanel= Alzheimer + ALS + DemLewy  +Parkinson+ corticoBasal +bvFTD + PPA +supraNuc;
-ParkinsonianPanel= Parkinson +corticoBasal +supraNuc;
+neuroPanel= Alzheimer + DemLewy  +Parkinson+ corticoBasal +bvFTD ;
+ParkinsonianPanel= Parkinson +corticoBasal +supraNuc +DemLewy;
 ofInterest=Parkinson+ALS+Alzheimer+bvFTD;
 
 ParkinsonianDem=corticoBasal+DemLewy;
@@ -114,18 +149,18 @@ het=contains(snpCollect, 'CT');
 underGPNMB=contains(snpCollect,'CC'); %the minor allele
 
 
-figure
-histogram(slopeCollect((overGPNMB) ),'BinWidth',1, 'FaceColor','b')
-hold on
-histogram(slopeCollect((underGPNMB)),'BinWidth',1, 'FaceColor','r')
-histogram(slopeCollect((het)),'BinWidth',1, 'FaceColor','g')
-xlabel('MOCA slope')
+% figure
+% histogram(slopeCollect((overGPNMB) ),'BinWidth',1, 'FaceColor','b')
+% hold on
+% histogram(slopeCollect((underGPNMB)),'BinWidth',1, 'FaceColor','r')
+% histogram(slopeCollect((het)),'BinWidth',1, 'FaceColor','g')
+% xlabel('MOCA slope')
 
 
-pt2Plot=[neuroPanel];
+pt2Plot=[ Alzheimer  ];
 val2Plot=slopeCollect;
 SNP=snpCollect;
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<15 ;
+remVals= isnan(val2Plot) | cellfun(@isempty,SNP)   ;
 
 figure
 b=bar(1,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot )))  ;
@@ -162,32 +197,58 @@ c.CData(1,:) = [0.3 0.1 .6];
 legend({'AA (over Production)', 'GC','GG (under Production)'})
 
 
-pt2Plot=Alzheimer
+anovan(val2Plot(~remVals), {underGPNMB(~remVals)})
 
 
 
-allPt=[ slopeCollect(~remVals & (overGPNMB|het) & pt2Plot),  slopeCollect(~remVals & underGPNMB & pt2Plot)];
+%% ok let's fit a glme to this function
 
-allMark=[ones(1, sum(~remVals & (overGPNMB|het)  & pt2Plot)),  2*ones(1, sum(~remVals & underGPNMB & pt2Plot)) ];
+% fixed effects of age sex SNP and educational attainment... consider using
+% INDDID as a random effect
 
-[p,~,~]=anovan(allPt,{allMark});
+%first let's hop in by formatting our table, there is actually very few
+%datapoints, at least for moca so let's avoid confusion
+
+
+remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<15 | ~Alzheimer | abs(val2Plot) >20   ;
+
+
+sexVar=categorical(sexCollect(~remVals))';
+startVar=startScore(~remVals)';
+slopeVar=slopeCollect(~remVals)';
+% transformedSlope=slopeVar- (min(slopeVar)) +1;
+% transformedSlope=boxcox(transformedSlope);
+
+snpVar=categorical(snpCollect(~remVals))';
+
+ageVar=ageAtTestCollect(~remVals)';
+edVar=edCollect(~remVals)';
+diagVar=categorical(diagCollect(~remVals))';
+IDVar=(IDCollect(~remVals)  )';
+
+varNames=["Sex","cogSlope", "rs199347","ageAtTest","edLevel",'dx','ID','startScore'];
+
+glmeTable = table(sexVar ,slopeVar,snpVar,ageVar,edVar,diagVar,IDVar, startVar, 'Variablenames',varNames);
+
+glmeTable.rs199347 = reordercats(glmeTable.rs199347, {'TT', 'CC', 'CT'});
 
 
 
+glme = fitglme(glmeTable,...
+		'cogSlope ~ 1  + rs199347 + Sex + startScore + (1|ageAtTest)  + (1|ID) ',...
+		'Distribution','normal','Link','identity','FitMethod','Laplace',...
+		'DummyVarCoding','reference')
+
+
+
+
+mdl = fitlm(glmeTable,'cogSlope')
+
+
+residuals = glme.residuals;
 figure
-
-pt2Plot=neuroPanel
-
-
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<10 ;
-
-compVal=-3;
-
-bar([sum(slopeCollect(~remVals & (overGPNMB) & pt2Plot)<compVal)/ sum(overGPNMB), sum(slopeCollect(~remVals & (het) & pt2Plot)<compVal)/ sum(het),   sum(slopeCollect(~remVals & (underGPNMB) & pt2Plot)<compVal)/ sum(underGPNMB) ])
-
-
-figure
-bar([sum(slopeCollect(~remVals & (overGPNMB) & pt2Plot)>-0)/ sum(overGPNMB), sum(slopeCollect(~remVals & (het) & pt2Plot)>-0)/ sum(het),   sum(slopeCollect(~remVals & (underGPNMB) & pt2Plot)>-.0)/ sum(underGPNMB) ])
+histogram(residuals, 20); % Residual distribution
+plotResiduals(glme, 'fitted');
 
 
 
