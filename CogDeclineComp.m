@@ -43,6 +43,7 @@ singleID=unique(globalID);
 
 slopeCollect=nan(1, length(singleID));
 startScore=nan(1, length(singleID));
+endScore=nan(1,length(singleID));
 year2DecCollect=nan(1, length(singleID));
 diagCollect=cell(1, length(singleID));
 snpCollect=cell(1, length(singleID));
@@ -103,7 +104,7 @@ IDCollect(tt)= singleID(tt);
          year2DecCollect(tt)= nan ;
             end
         startScore(tt)=relScores(1); %collect starting point
-           
+        endScore(tt)=relScores(end);   
         else
                 slopeCollect(tt)=nan;
                 IDCollect(tt)= nan;
@@ -112,6 +113,8 @@ IDCollect(tt)= singleID(tt);
                 diagCollect{tt}='nan';
                 snpCollect{tt}='nan';
                 sexCollect{tt}='nan';
+                endScore(tt)=nan;   
+
         
 
                 emptyIndex(tt)=true;
@@ -160,7 +163,7 @@ underGPNMB=contains(snpCollect,'CC'); %the minor allele
 pt2Plot=[ Alzheimer  ];
 val2Plot=slopeCollect;
 SNP=snpCollect;
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP)   ;
+remVals= isnan(val2Plot) | cellfun(@isempty,SNP)  ;
 
 figure
 b=bar(1,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot )))  ;
@@ -215,6 +218,7 @@ remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<15 | ~Alzheimer | 
 
 sexVar=categorical(sexCollect(~remVals))';
 startVar=startScore(~remVals)';
+endVar=endScore(~remVals)';
 slopeVar=slopeCollect(~remVals)';
 % transformedSlope=slopeVar- (min(slopeVar)) +1;
 % transformedSlope=boxcox(transformedSlope);
@@ -226,9 +230,9 @@ edVar=edCollect(~remVals)';
 diagVar=categorical(diagCollect(~remVals))';
 IDVar=(IDCollect(~remVals)  )';
 
-varNames=["Sex","cogSlope", "rs199347","ageAtTest","edLevel",'dx','ID','startScore'];
+varNames=["Sex","cogSlope", "rs199347","ageAtTest","edLevel",'dx','ID','startScore','endScore'];
 
-glmeTable = table(sexVar ,slopeVar,snpVar,ageVar,edVar,diagVar,IDVar, startVar, 'Variablenames',varNames);
+glmeTable = table(sexVar ,slopeVar,snpVar,ageVar,edVar,diagVar,IDVar, startVar, endVar, 'Variablenames',varNames);
 
 glmeTable.rs199347 = reordercats(glmeTable.rs199347, {'TT', 'CC', 'CT'});
 
@@ -256,6 +260,14 @@ residuals = glme.residuals;
 figure
 histogram(residuals, 20); % Residual distribution
 plotResiduals(glme, 'fitted');
+
+%nice, some interesting stuff, let's just quickly write this out so we can
+%hang onto it
+
+
+
+
+
 
 
 

@@ -66,13 +66,13 @@ figure
 
 %really clear and interesting trend for age at onset and disease duration
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
-subplot(2,2,2)
+subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
-subplot(2,2,3:4)
-[pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, HC,ALS, 'ALS', 'rs199347', 10000,1,'true');
-
+% subplot(2,2,3:4)
+% [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, HC,ALS, 'ALS', 'rs199347', 10000,1,'true');
+% 
 
 
 %I think there is a clear trend here, we are just very underpowered over
@@ -100,12 +100,14 @@ snpPlotterGPNMB2(GPNMBSNP, HC,MCI, 'MCI')
 %incredibly interesting clear trend in both directions, exact opposite to
 %what is seen in ALS
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, corticoBasal, 'Disease Duration', 'corticoBasal Syndrome')
-subplot(2,2,2)
+subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, corticoBasal, 'Age At Onset', 'corticoBasal Syndrome ')
-subplot(2,2,3:4)
-[pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,corticoBasal, 'CorticoBasal', 'rs199347', 10000,1,'true');
+
+
+% subplot(2,2,3:4)
+% [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,corticoBasal, 'CorticoBasal', 'rs199347', 10000,1,'true');
 
 %nothing
 
@@ -114,8 +116,8 @@ subplot(2,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, bvFTD, 'Disease Duration', 'bvFTD')
 subplot(2,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, bvFTD, 'Age At Onset', 'bvFTD')
-subplot(2,2,3:4)
-snpPlotterGPNMB2(GPNMBSNP, HC,bvFTD, 'bvFTD')
+% subplot(2,2,3:4)
+% snpPlotterGPNMB2(GPNMBSNP, HC,bvFTD, 'bvFTD')
 
 
 figure
