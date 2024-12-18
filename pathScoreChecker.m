@@ -57,14 +57,30 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
-brainAreaAtPlay='SMT';
+brainAreaAtPlay='Amyg';
 pt2use=Alzheimer ;
-pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
+pathType=2; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
 pathName='Asyn';
 disName='Alzheimer"s';
 plotType='scatBar'; %currently just two options Stacked bar graph ('stackBar')
 %and a scatter bar graph (scatBar);
 snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,pathName,plotType)
+
+
+
+
+
+
+%% analysis 3 is there a relationship between path score and cognition and
+% is this in some way mediated by SNP status... 
+brainAreaAtPlay='SMT';
+pt2use=Alzheimer;
+pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
+snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType   )
+
+
+
+
 
 
 %% analysis 2 previously I have shown
@@ -121,9 +137,7 @@ legend({'AA (over Production)', 'GC','GG (under Production)'})
 
 %% analysis 3 is there a relationship between path score and cognition and
 % is this in some way mediated by SNP status... 
-brainAreaAtPlay='Amyg';
-pt2use=neuroPanel;
-pathCut=4;
-
-snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathCut   )
+brainAreaAtPlay='Ang';
+pt2use=Parkinson;
+snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData   )
 

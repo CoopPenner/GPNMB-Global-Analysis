@@ -1,4 +1,4 @@
-function [] = snpStatPathCogTestr(pt2Plot,brainAreaAtPlay, pathTable, cogTable,pathCut   )
+function [] = snpStatPathCogTestr(pt2Plot,brainAreaAtPlay, pathTable, cogTable, pathType   )
 %our third analysis, herein I evaluate how the relationship between
 %cognitive decline and pathology is mediated by SNP Status
 
@@ -42,88 +42,71 @@ endScoreHold=endScorez(cogID==pathID(tt));
 
 
 
-  path2Plot=asynCont;
 
-secondaryCut=pathCut;
+if pathType==1
+    path2Plot=asynCont;
+    elseif pathType==2
+    path2Plot=aBetaCont;
+    elseif pathType==3
+    path2Plot=tauCont;
+    elseif pathType==4
+    path2Plot=TDPCont;
+end
+
+
+
+
+
 val2Plot=cogScoreAtPlay;
 SNP=snpStat;
-remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)   ;
+remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
+
+%% plotting
+figure
+
+subplot(1,3,1)
+cogPathScatBarPlotr(val2Plot, remVals, overGPNMB,pt2Plot,path2Plot)
+ylabel('cognitive decline slope')
+legend({'3+','2+','1+','rare', 'none'})
+[r,p]=corrcoef(val2Plot(pt2Plot& (overGPNMB)& ~remVals ), path2Plot(pt2Plot& (overGPNMB)& ~remVals), 'rows','complete');
+title(['AA (over Production)  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
+
+
+subplot(1,3,2)
+cogPathScatBarPlotr(val2Plot, remVals, het,pt2Plot,path2Plot)
+[r,p]=corrcoef(val2Plot(pt2Plot& (het)& ~remVals ), path2Plot(pt2Plot& (het)& ~remVals), 'rows','complete');
+title(['AG  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
+legend({'3+','2+','1+','rare', 'none'})
+
+
+
+subplot(1,3,3)
+cogPathScatBarPlotr(val2Plot, remVals, underGPNMB,pt2Plot,path2Plot)
+
+[r,p]=corrcoef(val2Plot(pt2Plot & (underGPNMB) & ~remVals), path2Plot(pt2Plot& (underGPNMB)& ~remVals), 'rows','complete');
+
+title(['GG (under Production) SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
+legend({'3+','2+','1+','rare', 'none'})
 
 
 
 figure
 
+cogPathScatBarPlotr(val2Plot, remVals, true(1,length(underGPNMB))' ,pt2Plot,path2Plot)
 
-subplot(1,3,1)
+[r,p]=corrcoef(val2Plot(pt2Plot & ~remVals ), path2Plot(pt2Plot & ~remVals), 'rows','complete');
 
-b=bar(1,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot & path2Plot==4 )))  ;
-b.FaceColor = 'flat';
-b.FaceAlpha=.3;
-b.BarWidth=1.5;
-b.CData(1,:) = [.8 .2 .5]; 
-ylabel('end score')
-a=gca; a.XTickLabel=[];
-hold on
-
-b=bar(3,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot & path2Plot==3 )))  ;
-b.FaceColor = 'flat';
-b.FaceAlpha=.3;
-b.BarWidth=1.5;
-b.CData(1,:) = [0 0.7 .25];
-
-
-b=bar(5,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot & path2Plot==2 )))  ;
-b.FaceColor = 'flat';
-b.FaceAlpha=.3;
-b.BarWidth=1.5;
-b.CData(1,:) = [0.3 0.1 .6];
-
-
-
-b=bar(7,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot & path2Plot==1 )))  ;
-b.FaceColor = 'flat';
-b.FaceAlpha=.3;
-b.BarWidth=1.5;
-b.CData(1,:) = [0.1 0.5 .8];
-
-
-
-b=bar(9,nanmean(val2Plot(~remVals & overGPNMB & pt2Plot & path2Plot==0 )))  ;
-b.FaceColor = 'flat';
-b.FaceAlpha=.3;
-b.BarWidth=1.5;
-b.CData(1,:) = [0.9 0.4 .2];
-
-hold on
-scatter(rand(1, sum(~remVals & overGPNMB & pt2Plot & asynCont'==4 ))+.5, val2Plot(~remVals & overGPNMB & pt2Plot & asynCont'==4), 'Marker', 'o', 'MarkerEdgeColor', [.8 .2 .5] );
-
-
-scatter(rand(1, sum(~remVals & overGPNMB & pt2Plot & asynCont'==3))+2.5, val2Plot(~remVals & overGPNMB & pt2Plot & asynCont'==3), 'Marker', 'o', 'MarkerEdgeColor', [0 0.7 .25] );
-
-
-scatter(rand(1, sum(~remVals & overGPNMB & pt2Plot & asynCont'==2))+4.5, val2Plot(~remVals & overGPNMB & pt2Plot & asynCont'==2), 'Marker', 'o', 'MarkerEdgeColor', [0.3 0.1 .6]);
-
-scatter(rand(1, sum(~remVals & overGPNMB & pt2Plot & asynCont'==1))+6.5, val2Plot(~remVals & overGPNMB & pt2Plot & asynCont'==1), 'Marker', 'o', 'MarkerEdgeColor', [0.3 0.1 .6]);
-
-
-scatter(rand(1, sum(~remVals & overGPNMB & pt2Plot & asynCont'==0))+8.5, val2Plot(~remVals & overGPNMB & pt2Plot & asynCont'==0), 'Marker', 'o', 'MarkerEdgeColor', [0.3 0.1 .6]);
-
-
-
-legend({'AA (over Production)', 'GC','GG (under Production)'})
+title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
+legend({'3+','2+','1+','rare', 'none'})
 
 
 
 
-% figure
-% 
-% 
-% scatter(asynCont(pt2Plot &overGPNMB ), val2Plot(pt2Plot &overGPNMB), 'MarkerFaceColor','r')
-% lsline
-% hold on
-% scatter(asynCont(pt2Plot &underGPNMB ), val2Plot(pt2Plot &underGPNMB), 'MarkerFaceColor','c')
-% lsline
-% scatter(asynCont(pt2Plot &het ), val2Plot(pt2Plot &het), 'MarkerFaceColor','g')
-% lsline
-% 
-% [r,p]=corrcoef(asynCont(pt2Plot& (het | underGPNMB) ), val2Plot(pt2Plot& (het | underGPNMB)), 'rows','complete')
+
+
+
+
+
+end
+
+
