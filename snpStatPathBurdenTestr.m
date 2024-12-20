@@ -1,4 +1,4 @@
-function [outputArg1,outputArg2] = snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType, disName,pathName, plotType   )
+function [outputArg1,outputArg2] = snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType, disName, plotType   )
 %Our first basic analysis relating snp Status to levels of path burden,
 %currently separated based on asyn pure or asyn copath
 
@@ -15,16 +15,26 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 % now that we have our path scores as continuous variables, let's output
 % categorical for aSyn pure and aSyn copath
 
-[asynCont,tauCont,aBetaCont,TDPCont] = pathScoreGenerate(brainAreaAtPlay,pathTable);
+[asynCont,tauCont,aBetaCont,TDPCont,neuronDropCont,gliosisCont] = pathScoreGenerate(brainAreaAtPlay,pathTable);
 
 if pathType==1
     val2Test=asynCont;
+    pathName='Asyn';
 elseif pathType==2
     val2Test=aBetaCont;
+        pathName='aBeta';
 elseif pathType==3
     val2Test=tauCont;
+    pathName='Tau';
 elseif  pathType==4
     val2Test=TDPCont;
+    pathName='TDP43';
+elseif pathType==5
+    val2Test=neuronDropCont;
+    pathName='NeuronLoss';
+elseif pathType==6
+    val2Test=gliosisCont;
+    pathName='Gliosis';
 end
 
 % asynPure=val2Test > 1 & (tauCont <=1 & aBetaCont <=1 & TDPCont <=1); % I consider a positive path score to be > 1 ('rare')
@@ -124,3 +134,33 @@ a.YTick(a.YTick>100)=[];
 
 
 end
+
+
+
+
+
+
+
+
+
+% nanmean(TDPCont(~remVals  & pt2use & asynCont'==4))
+% nanmean(TDPCont(~remVals  & pt2use & asynCont'==3))
+% nanmean(TDPCont(~remVals  & pt2use & asynCont'==2))
+% nanmean(TDPCont(~remVals  & pt2use & asynCont'==1))
+% nanmean(TDPCont(~remVals  & pt2use & asynCont'==0))
+% 
+% 
+% 
+% 
+% nanmean(asynCont(~remVals  & pt2use & TDPCont'==4))
+% nanmean(asynCont(~remVals  & pt2use & TDPCont'==3))
+% nanmean(asynCont(~remVals  & pt2use & TDPCont'==2))
+% nanmean(asynCont(~remVals  & pt2use & TDPCont'==1))
+% nanmean(asynCont(~remVals  & pt2use & TDPCont'==0))
+
+
+nanmean(asynCont(~remVals  & pt2use & TDPCont'==4 & neuronDropCont'>0));
+nanmean(asynCont(~remVals  & pt2use & TDPCont'==3& neuronDropCont'>0));
+nanmean(asynCont(~remVals  & pt2use & TDPCont'==2& neuronDropCont'>0));
+nanmean(asynCont(~remVals  & pt2use & TDPCont'==1& neuronDropCont'>0));
+nanmean(asynCont(~remVals  & pt2use & TDPCont'==0& neuronDropCont'>0));

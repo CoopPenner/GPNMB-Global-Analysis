@@ -59,12 +59,11 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 brainAreaAtPlay='Amyg';
 pt2use=Alzheimer ;
-pathType=2; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
-pathName='Asyn';
+pathType= 1; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
 disName='Alzheimer"s';
 plotType='scatBar'; %currently just two options Stacked bar graph ('stackBar')
 %and a scatter bar graph (scatBar);
-snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,pathName,plotType)
+snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotType)
 
 
 
@@ -73,13 +72,20 @@ snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,pathNa
 
 %% analysis 3 is there a relationship between path score and cognition and
 % is this in some way mediated by SNP status... 
-brainAreaAtPlay='SMT';
+brainAreaAtPlay='Amyg';
 pt2use=Alzheimer;
 pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
 snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType   )
 
 
+%% analysis 4 looking specifically at the apparent inverse relationship between TDP burden and aSyn in alz
+%additionally adding in functionality for neuronal dropout and whatnot for
+%all path scores
 
+brainAreaAtPlay='Amyg';
+pt2use=neuroPanel;
+figure
+pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogData   )
 
 
 

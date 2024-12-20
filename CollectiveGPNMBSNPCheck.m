@@ -27,6 +27,7 @@ supraNuc= (contains(clinDataTot.GlobalDx, 'Progressive supranuclear palsy'));
 neuroPanel= Alzheimer + ALS + DemLewy  + corticoBasal +bvFTD + PPA +supraNuc;
 ParkinsonianPanel= Parkinson +corticoBasal +supraNuc;
 ParkinsonianDem=corticoBasal+DemLewy;
+ageOnsetTrend=supraNuc+ALS;
 other= ~neuroPanel;
 HC=(contains(clinDataTot.GlobalDx, 'Normal')); 
 
@@ -40,34 +41,34 @@ underGPNMB=contains(GPNMBSNP,'CC'); %the minor allele
 % Parkinson's no diff re age of onset or death but the expected diff in the
 % allele freq
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, Parkinson, 'Disease Duration', 'Parkinson"s Disease')
-subplot(2,2,2)
+subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, Parkinson, 'Age At Onset', 'Parkinson"s Disease')
-subplot(2,2,3:4)
-snpPlotterGPNMB2(GPNMBSNP, HC,Parkinson, 'Parkinson"s')
+% subplot(2,2,3:4)
+% snpPlotterGPNMB2(GPNMBSNP, HC,Parkinson, 'Parkinson"s')
 
 
 
 
 %ALZ nothin
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, Alzheimer, 'Disease Duration', 'Alzheimer"s Disease')
-subplot(2,2,2)
-snpPlotterGPNMB(GPNMBSNP,ageAtOnset, Alzheimer, 'Age At Onset', 'Alzheimer"s Disease')
-subplot(2,2,3:4)
+subplot(1,2,2)
+ snpPlotterGPNMB(GPNMBSNP,ageAtOnset, Alzheimer, 'Age At Onset', 'Alzheimer"s Disease')
+% subplot(2,2,3:4)
 
 figure
 % this step runs a permutation 
 [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,Alzheimer, 'Alzheimer"s', 'rs199347', 10000,1,'true');
 
-
+disDurHold=disDur;disDurHold(disDurHold>45)=nan;
 
 %really clear and interesting trend for age at onset and disease duration
 figure
 subplot(1,2,1)
-snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
+snpPlotterGPNMB(GPNMBSNP,disDurHold, ALS, 'Disease Duration', 'ALS')
 subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 % subplot(2,2,3:4)
@@ -79,21 +80,22 @@ snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 %production has a faster disease progression (ie onset to death)
 
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, DemLewy, 'Disease Duration', 'Dementia with Lewy Bodies')
-subplot(2,2,2)
+subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, DemLewy, 'Age At Onset', 'Dementia with Lewy Bodies')
-subplot(2,2,3:4)
-snpPlotterGPNMB2(GPNMBSNP, HC,DemLewy, 'Dementia with Lewy Bodies',1000)
 
+% subplot(2,2,3:4)
+% snpPlotterGPNMB2(GPNMBSNP, HC,DemLewy, 'Dementia with Lewy Bodies',1000)
+% 
 
 figure
-subplot(2,2,1)
+subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, MCI, 'Disease Duration', 'MCI')
-subplot(2,2,2)
+subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, MCI, 'Age At Onset', 'MCI')
-subplot(2,2,3:4)
-snpPlotterGPNMB2(GPNMBSNP, HC,MCI, 'MCI')
+% subplot(2,2,3:4)
+% snpPlotterGPNMB2(GPNMBSNP, HC,MCI, 'MCI')
 
 
 
@@ -142,13 +144,13 @@ snpPlotterGPNMB2(GPNMBSNP, HC,PPA, 'PPA')
 
 
 figure
-subplot(2,2,1)
-snpPlotterGPNMB(GPNMBSNP,disDur, neuroPanel, 'Disease Duration', 'PPA')
-subplot(2,2,2)
-snpPlotterGPNMB(GPNMBSNP,ageAtOnset, neuroPanel, 'Age At Onset', 'PPA')
-subplot(2,2,3:4)
-snpPlotterGPNMB2(GPNMBSNP, HC,neuroPanel, 'Collective Neuro Disease')
-
+subplot(1,2,1)
+snpPlotterGPNMB(GPNMBSNP,disDur, ageOnsetTrend, 'Disease Duration', 'PPA')
+subplot(1,2,2)
+snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ageOnsetTrend, 'Age At Onset', 'PPA')
+% subplot(2,2,3:4)
+% snpPlotterGPNMB2(GPNMBSNP, HC,neuroPanel, 'Collective Neuro Disease')
+% 
 
 
 figure

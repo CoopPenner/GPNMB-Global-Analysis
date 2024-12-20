@@ -101,6 +101,56 @@ legend({'3+','2+','1+','rare', 'none'})
 
 %% experimental section 
 
+b=1;
+
+
+
+
+figure
+
+pathCut=2;
+path2Plot1=asynCont;
+path2Plot2=TDPCont;
+
+cogPathSplitScatBarPlotr(val2Plot, remVals, SNP, pt2use, path2Plot1, path2Plot2, pathCut)
+
+[r,p]=corrcoef(val2Plot(pt2use & ~remVals ), path2Plot(pt2use & ~remVals), 'rows','complete');
+
+title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
+legend({'3+','2+','1+','rare', 'none'})
+
+
+
+nanmean(val2Plot(overGPNMB & asynCont' <2 & TDPCont'>2  & pt2use ))
+
+
+
+nanmean(val2Plot(overGPNMB & asynCont' >2 & TDPCont'<2  & pt2use ))
+
+
+
+
+
+
+
+nanmean(val2Plot(het & asynCont' <1 & TDPCont'>1  & pt2use ))
+
+
+
+nanmean(val2Plot(het & asynCont' >1 & TDPCont'<1  & pt2use ))
+
+
+
+
+
+
+nanmean(val2Plot(underGPNMB & asynCont' <1 & TDPCont'>1  & pt2use ))
+
+
+
+nanmean(val2Plot(underGPNMB & asynCont' >1 & TDPCont'<1  & pt2use ))
+
+
 
 
 % figure

@@ -1,5 +1,62 @@
-function [] = cogPathScatBarPlotr(val2Plot, remVals,snpMark,pt2Plot,path2Plot)
-%plotting function for scatter bars
+b=1;
+
+
+
+[n,p]=corrcoef(TDPCont(~remVals & (het|overGPNMB) & pt2use & (TDPCont'>0  )  ),asynCont(~remVals & pt2use &(het|overGPNMB)   & (TDPCont'>0  ) ),'rows','complete')
+
+
+[n,p]=corrcoef(asynCont(~remVals  & pt2use & overGPNMB ) ,neuronDropCont(~remVals & pt2use & overGPNMB    ) ,'rows','complete')
+
+
+[n,p]=corrcoef(TDPCont(~remVals  & pt2use & het  ) ,neuronDropCont(~remVals & pt2use & het ) ,'rows','complete')
+
+
+
+
+
+[r,p]=corrcoef(val2Plot(~remVals & (het|overGPNMB) & pt2use &TDPCont'>0 ) ,TDPCont(~remVals & (het|overGPNMB) & pt2use &TDPCont'>0   )  )
+
+
+
+[r,p]=corrcoef(asynCont(~remVals  & pt2use  ) ,val2Plot(~remVals  & pt2use    ) ,'rows','complete' )
+
+
+nanmean(val2Plot(overGPNMB & TDPCont'<2 & asynCont'>2)  )
+
+
+nanmean(val2Plot( overGPNMB &  TDPCont'<2 & asynCont'>2)  )
+
+
+nanmean(val2Plot(overGPNMB &  TDPCont'>2 & asynCont'<2)  )
+
+
+nanmean(val2Plot(overGPNMB &  TDPCont'>1 & asynCont'<1)  )
+
+
+
+nanmean(val2Plot(overGPNMB &  TDPCont'<1 & asynCont'>1)  )
+
+
+nanmean(val2Plot(overGPNMB &  TDPCont'>1 & asynCont'<1)  )
+
+
+figure
+
+
+
+
+remVals= isnan(val2Plot)' | cellfun(@isempty,SNP) |   ;
+
+
+cogPathScatBarPlotr(val2Plot, remVals, overGPNMB,pt2use,path2Plot)
+
+[r,p]=corrcoef(val2Plot(pt2use & (underGPNMB) & ~remVals), path2Plot(pt2use& (underGPNMB)& ~remVals), 'rows','complete');
+
+title(['GG (under Production) SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
+legend({'3+','2+','1+','rare', 'none'})
+
+
+
 
 
 
