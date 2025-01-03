@@ -1,8 +1,7 @@
-function [] = snpPlotterGPNMB(SNP,val2Plot, pt2Plot, ValName, ptNameh)
+function [] = ALSSpecGPNMBPlotr(SNP,val2Plot, pt2Plot, ValName, ptName, remVals)
 %initializing  figure generation for a host of different neurodegenerative
 %conditions in the context of GPNMB SNP status
 
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | SOD1 | motorOnset  ;
 
 overGPNMB= contains(SNP,'TT'); %the major allele
 het=contains(SNP, 'CT');

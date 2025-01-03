@@ -1,6 +1,10 @@
-function [] = snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogTable, pathType   )
+function [] = snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogTable, pathType,secondPath,pathType2,secondPathCut   )
 %our third analysis, herein I evaluate how the relationship between
 %cognitive decline and pathology is mediated by SNP Status
+
+
+
+
 
 
 globalDx=pathTable.GlobalDx;
@@ -45,58 +49,93 @@ endScoreHold=endScorez(cogID==pathID(tt));
 
 if pathType==1
     path2Plot=asynCont;
+    
     elseif pathType==2
     path2Plot=aBetaCont;
     elseif pathType==3
     path2Plot=tauCont;
     elseif pathType==4
     path2Plot=TDPCont;
+    elseif pathType==5
+    path2Plot=neuronLossCont;
+    elseif pathType==6
+    path2Plot=gliosisCont;
 end
 
 
 
+if secondPath && pathType2==1
+secondPath2Plot=asynCont;
+elseif secondPath && pathType2==2
+secondPath2Plot=aBetaCont;
 
+elseif secondPath && pathType2==3
+secondPath2Plot=tauCont;
+
+elseif secondPath && pathType2==4
+secondPath2Plot=TDPCont;
+
+elseif secondPath && pathType2==5
+secondPath2Plot=neuronLossCont;
+
+elseif secondPath && pathType2==6
+secondPath2Plot=gliosisCont;
+
+elseif ~secondPath
+    secondPath2Plot=nan;
+end
 
 val2Plot=cogScoreAtPlay;
 SNP=snpStat;
-remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
+remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)     ;
 
 %% plotting
+
+
 figure
 
+
+
 subplot(1,3,1)
-cogPathScatBarPlotr(val2Plot, remVals, overGPNMB,pt2use,path2Plot)
+cogPathScatBarPlotr(val2Plot, remVals, overGPNMB,pt2use,path2Plot,secondPath,secondPath2Plot,secondPathCut)
 ylabel('cognitive decline slope')
-legend({'3+','2+','1+','rare', 'none'})
+legend({'3+','rare-2+', 'none'})
 [r,p]=corrcoef(val2Plot(pt2use& (overGPNMB)& ~remVals ), path2Plot(pt2use& (overGPNMB)& ~remVals), 'rows','complete');
 title(['AA (over Production)  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
 
 
 subplot(1,3,2)
-cogPathScatBarPlotr(val2Plot, remVals, het,pt2use,path2Plot)
+cogPathScatBarPlotr(val2Plot, remVals, het,pt2use,path2Plot,secondPath,secondPath2Plot,secondPathCut)
 [r,p]=corrcoef(val2Plot(pt2use& (het)& ~remVals ), path2Plot(pt2use& (het)& ~remVals), 'rows','complete');
 title(['AG  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
-legend({'3+','2+','1+','rare', 'none'})
+legend({'3+','rare-2+', 'none'})
 
 
 subplot(1,3,3)
-cogPathScatBarPlotr(val2Plot, remVals, underGPNMB,pt2use,path2Plot)
+cogPathScatBarPlotr(val2Plot, remVals, underGPNMB,pt2use,path2Plot,secondPath,secondPath2Plot,secondPathCut)
 
 [r,p]=corrcoef(val2Plot(pt2use & (underGPNMB) & ~remVals), path2Plot(pt2use& (underGPNMB)& ~remVals), 'rows','complete');
 
 title(['GG (under Production) SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
-legend({'3+','2+','1+','rare', 'none'})
+legend({'3+','rare-2+', 'none'})
 
 
 
 figure
 
-cogPathScatBarPlotr(val2Plot, remVals, true(1,length(underGPNMB))' ,pt2use,path2Plot)
+cogPathScatBarPlotr(val2Plot, remVals, true(1,length(underGPNMB))' ,pt2use,path2Plot,secondPath,secondPath2Plot,secondPathCut)
 
 [r,p]=corrcoef(val2Plot(pt2use & ~remVals ), path2Plot(pt2use & ~remVals), 'rows','complete');
 
 title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
-legend({'3+','2+','1+','rare', 'none'})
+legend({'3+','rare-2+', 'none'})
+
+
+
+
+
+
+
 
 
 %% experimental section 

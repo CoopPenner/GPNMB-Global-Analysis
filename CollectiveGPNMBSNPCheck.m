@@ -3,7 +3,7 @@ addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Anal
 
 
 %ClinDatTot= readtable('/Users/pennerc/Documents/AllPt_GPNMB_SNP_Status.xlsx');
-clinDataTot=readtable('/Users/pennerc/Documents/AllPatients_extraSNP_noMOCAorPATH.xlsx');
+clinDataTot=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
 
 %Here I simply walk through and plot all diseases within INDD related to
 %GPNMB status 
@@ -13,28 +13,41 @@ ID=clinDataTot.INDDID;
 ageAtOnset=(clinDataTot.GlobalAgeOnset);
 ageAtDeath=(clinDataTot.AgeatDeath);
 disDur=ageAtDeath-ageAtOnset;
+globalDx=clinDataTot.GlobalDx;
+pdDX=clinDataTot.PDCDx;
+CNDRDX=clinDataTot.CNDRDx;
+alsDX=clinDataTot.ALSDx;
+adDX=clinDataTot.ADCDx;
+snpStat=clinDataTot.rs199347;
+pathID=clinDataTot.INDDID;
+geneCarrier=~cellfun(@isempty,clinDataTot.Mutation_Summary);
+SOD1=contains(clinDataTot.Mutation_Summary,'SOD1');
 
 
-Parkinson= (contains(clinDataTot.GlobalDx, 'Parkinson'));
-Alzheimer= (contains(clinDataTot.GlobalDx, 'Alzheimer'));
-ALS= (contains(clinDataTot.GlobalDx, 'Amyotrophic'));
-DemLewy= (contains(clinDataTot.GlobalDx, 'Dementia with Lewy Bodies')); 
-MCI= (contains(clinDataTot.GlobalDx, 'Mild cognitive impairment')); 
-corticoBasal= (contains(clinDataTot.GlobalDx, 'Corticobasal syndrome')); 
-bvFTD= (contains(clinDataTot.GlobalDx, 'bvFTD-FTLD')); 
-PPA= (contains(clinDataTot.GlobalDx, 'PPA')); 
-supraNuc= (contains(clinDataTot.GlobalDx, 'Progressive supranuclear palsy')); 
-neuroPanel= Alzheimer + ALS + DemLewy  + corticoBasal +bvFTD + PPA +supraNuc;
-ParkinsonianPanel= Parkinson +corticoBasal +supraNuc;
-ParkinsonianDem=corticoBasal+DemLewy;
-ageOnsetTrend=supraNuc+ALS;
+
+Parkinson= (contains(globalDx, 'Parkinson') |  contains(CNDRDX, 'Parkinson')    );
+Alzheimer= (contains(globalDx, 'Alzheimer')  | contains(adDX, 'Alzheimer') | contains(CNDRDX, 'Alzheimer')    );
+ALS= (contains(globalDx, 'Amyotrophic'));
+DemLewy= (contains(globalDx, 'Dementia with Lewy Bodies')|  contains(CNDRDX, 'Dementia with Lewy Bodies')    );
+MCI= (contains(globalDx, 'Mild cognitive impairment')); 
+corticoBasal= (contains(globalDx, 'Corticobasal syndrome') | contains(CNDRDX, 'Corticobasal syndrome')    );
+bvFTD= (contains(globalDx, 'bvFTD-FTLD')); 
+PPA= (contains(globalDx, 'PPA')); 
+supraNuc= (contains(globalDx, 'Progressive supranuclear palsy')|  contains(CNDRDX, 'Progressive supranuclear palsy')    );
+neuroPanel= Alzheimer | DemLewy  | Parkinson| corticoBasal ;
+ParkinsonianPanel= Parkinson |corticoBasal |supraNuc |DemLewy;
+ofInterest=ALS|corticoBasal;
+ParkinsonianDem=corticoBasal|DemLewy;
 other= ~neuroPanel;
-HC=(contains(clinDataTot.GlobalDx, 'Normal')); 
+HC=(contains(globalDx, 'Normal')); 
+
+normGen= ALS |Alzheimer |DemLewy | MCI | bvFTD | PPA | supraNuc | Parkinson;
 
 
-overGPNMB= contains(GPNMBSNP,'TT'); %the major allele
-het=contains(GPNMBSNP, 'CT');
-underGPNMB=contains(GPNMBSNP,'CC'); %the minor allele
+
+overGPNMB= contains(snpStat,'TT'); %the major allele
+het=contains(snpStat, 'CT');
+underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
 
@@ -63,12 +76,11 @@ figure
 % this step runs a permutation 
 [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,Alzheimer, 'Alzheimer"s', 'rs199347', 10000,1,'true');
 
-disDurHold=disDur;disDurHold(disDurHold>45)=nan;
 
 %really clear and interesting trend for age at onset and disease duration
 figure
 subplot(1,2,1)
-snpPlotterGPNMB(GPNMBSNP,disDurHold, ALS, 'Disease Duration', 'ALS')
+snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
 subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 % subplot(2,2,3:4)
@@ -107,9 +119,8 @@ snpPlotterGPNMB(GPNMBSNP,disDur, corticoBasal, 'Disease Duration', 'corticoBasal
 subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, corticoBasal, 'Age At Onset', 'corticoBasal Syndrome ')
 
-
-% subplot(2,2,3:4)
-% [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, Parkinson,corticoBasal, 'CorticoBasal', 'rs199347', 10000,1,'true');
+figure
+[pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, normGen,corticoBasal, 'CorticoBasal', 'rs199347', 10000,1,'true');
 
 %nothing
 

@@ -39,7 +39,7 @@ holderVar=nan(1,length(pathID));
         TDPCont=outputVar;
    elseif pathAtPlay==5
        neuronDropCont=outputVar;
-         elseif pathAtPlay==6 
+   elseif pathAtPlay==6 
         gliosisCont=outputVar;
    end
 end

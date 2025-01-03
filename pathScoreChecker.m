@@ -2,9 +2,13 @@
 
 addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
 %reading in path scores and other requisite info
-pathTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_extraSNP_pathInfo.xlsx');
+pathTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_updated_pathInfo.xlsx');
 allNames=pathTable.Properties.VariableNames;
 globalDx=pathTable.GlobalDx;
+pdDX=pathTable.PDCDx;
+CNDRDX=pathTable.CNDRDx;
+alsDX=pathTable.ALSDx;
+adDX=pathTable.ADCDx;
 snpStat=pathTable.rs199347;
 pathID=pathTable.INDDID;
 
@@ -27,24 +31,26 @@ cogID=cogData.ID;
 cogSlope=cogData.cogSlope;
 endScorez=cogData.endScore;
 
+basicData=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
+
 
 %it's a little strange to initialize things here since I pass the dataTable
 %object to each of the downstream functions, but I feel it helps with
 %readability and fast iteration 
 
-Parkinson= (contains(globalDx, 'Parkinson'));
-Alzheimer= (contains(globalDx, 'Alzheimer')   )  ;
-ALS= (contains(globalDx, 'Amyotrophic'));
-DemLewy= (contains(globalDx, 'Dementia with Lewy Bodies')); 
+Parkinson= (contains(globalDx, 'Parkinson') | contains(pdDX, 'Parkinson') | contains(CNDRDX, 'Parkinson')    );
+Alzheimer= (contains(globalDx, 'Alzheimer')  );  
+ALS= contains(globalDx, 'Amyotrophic'); %| contains(alsDX, 'Amyotrophic') | contains(CNDRDX, 'Amyotrophic')    );
+DemLewy= (contains(globalDx, 'Dementia with Lewy Bodies')| contains(pdDX, 'Dementia with Lewy Bodies') | contains(CNDRDX, 'Dementia with Lewy Bodies')    );
 MCI= (contains(globalDx, 'Mild cognitive impairment')); 
-corticoBasal= (contains(globalDx, 'Corticobasal syndrome')); 
+corticoBasal= contains(globalDx, 'Corticobasal syndrome'); %| contains(pdDX, 'Corticobasal syndrome') | contains(CNDRDX, 'Corticobasal syndrome')    );
 bvFTD= (contains(globalDx, 'bvFTD-FTLD')); 
 PPA= (contains(globalDx, 'PPA')); 
-supraNuc= (contains(globalDx, 'Progressive supranuclear palsy')); 
-neuroPanel= Alzheimer + DemLewy  +Parkinson+ corticoBasal + ALS;
-ParkinsonianPanel= Parkinson +corticoBasal +supraNuc +DemLewy;
-ofInterest=ALS+corticoBasal;
-ParkinsonianDem=corticoBasal+DemLewy;
+supraNuc= (contains(globalDx, 'Progressive supranuclear palsy')| contains(pdDX, 'Progressive supranuclear palsy') | contains(CNDRDX, 'Progressive supranuclear palsy')    );
+neuroPanel= Alzheimer | DemLewy  | Parkinson| corticoBasal ;
+ParkinsonianPanel= Parkinson |corticoBasal |supraNuc |DemLewy;
+ofInterest=ALS|corticoBasal;
+ParkinsonianDem=corticoBasal|DemLewy;
 other= ~neuroPanel;
 HC=(contains(globalDx, 'Normal')); 
 
@@ -60,10 +66,10 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 brainAreaAtPlay='Amyg';
 pt2use=Alzheimer ;
 pathType= 1; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
-disName='Alzheimer"s';
-plotType='scatBar'; %currently just two options Stacked bar graph ('stackBar')
-%and a scatter bar graph (scatBar);
-snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotType)
+disName='CBS';
+plotType='both'; %currently just two options Stacked bar graph ('stackBar')
+%and a scatter bar graph (scatBar); both has both as subplots
+snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotType, basicData)
 
 
 
@@ -74,8 +80,11 @@ snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotTy
 % is this in some way mediated by SNP status... 
 brainAreaAtPlay='Amyg';
 pt2use=Alzheimer;
-pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP
-snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType   )
+pathType=1; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+secondPath=false;
+secondPath2Plot=5;
+secondPathCut=2;
+snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType,secondPath,secondPath2Plot,secondPathCut   )
 
 
 %% analysis 4 looking specifically at the apparent inverse relationship between TDP burden and aSyn in alz
@@ -83,9 +92,17 @@ snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType   )
 %all path scores
 
 brainAreaAtPlay='Amyg';
-pt2use=neuroPanel;
+pt2use=Alzheimer;
+pathCut=1;
+
 figure
-pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogData   )
+pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathCut   )
+
+%% analysis 5 just showing what brain area has the highest burden in a given disease
+
+
+
+
 
 
 
@@ -140,10 +157,4 @@ legend({'AA (over Production)', 'GC','GG (under Production)'})
 
 
 
-
-%% analysis 3 is there a relationship between path score and cognition and
-% is this in some way mediated by SNP status... 
-brainAreaAtPlay='Ang';
-pt2use=Parkinson;
-snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData   )
 
