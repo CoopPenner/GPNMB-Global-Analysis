@@ -60,7 +60,7 @@ het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
-%test 2
+%% quick testarooooo
 
 
 
