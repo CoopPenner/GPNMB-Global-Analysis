@@ -60,6 +60,10 @@ het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
+%% quick testarooooo
+
+
+
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
