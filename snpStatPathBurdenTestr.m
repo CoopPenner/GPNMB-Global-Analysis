@@ -225,64 +225,64 @@ end
 
 
 
-Sex=basicData.Sex;
-ageAtDeath=basicData.AgeatDeath;
-ID=basicData.INDDID;
+% Sex=basicData.Sex;
+% ageAtDeath=basicData.AgeatDeath;
+% ID=basicData.INDDID;
+% 
+% 
+% 
+% sexVar=cell(1,length(pathID));
+% ageAtDeathVar=nan(1,length(pathID));
+%     for dd=1:length(pathID)
+%     basicIDX=find( ID==pathID(dd) );
+%     sexVar{dd}=Sex{basicIDX}; ageAtDeathVar(dd)=ageAtDeath(basicIDX);
+%     end
+% 
+% 
 
 
 
-sexVar=cell(1,length(pathID));
-ageAtDeathVar=nan(1,length(pathID));
-    for dd=1:length(pathID)
-    basicIDX=find( ID==pathID(dd) );
-    sexVar{dd}=Sex{basicIDX}; ageAtDeathVar(dd)=ageAtDeath(basicIDX);
-    end
-
-
-
-
-
-ageVar=ageAtDeathVar(~remVals & pt2use)' ;
-IDVar=(pathID(~remVals & pt2use))   ;
-sexVarTable=categorical(sexVar(~remVals & pt2use))' ;
-snpVar= categorical(snpStat(~remVals & pt2use));
-pathVar= val2Test(~remVals & pt2use)';
-
-varNames=["age","ID", "sex","snp","pathScore"];
-
-glmeTable = table(ageVar ,IDVar,sexVarTable,snpVar,pathVar,'Variablenames',varNames);
-
-
-
-
-glme = fitglme(glmeTable,...
-		'pathScore ~ 1  + sex + age + snp   ',...
-		'Distribution','Normal','Link','identity','FitMethod','Laplace',...
-		'DummyVarCoding','reference')
+% ageVar=ageAtDeathVar(~remVals & pt2use)' ;
+% IDVar=(pathID(~remVals & pt2use))   ;
+% sexVarTable=categorical(sexVar(~remVals & pt2use))' ;
+% snpVar= categorical(snpStat(~remVals & pt2use));
+% pathVar= val2Test(~remVals & pt2use)';
+% 
+% varNames=["age","ID", "sex","snp","pathScore"];
+% 
+% glmeTable = table(ageVar ,IDVar,sexVarTable,snpVar,pathVar,'Variablenames',varNames);
+% 
+% 
+% 
+% 
+% glme = fitglme(glmeTable,...
+% 		'pathScore ~ 1  + sex + age + snp   ',...
+% 		'Distribution','Normal','Link','identity','FitMethod','Laplace',...
+% 		'DummyVarCoding','reference')
+% 
+% 
 
 
 
 
 
 
-
-
-
-overGPNMB= contains(snpStat,'TT'); %the major allele
-het=contains(snpStat, 'CT');
-underGPNMB=contains(snpStat,'CC'); %the minor allele
-
-snpCond=nan(1, length(overGPNMB)   );
-snpCond(overGPNMB & ~remVals &pt2use )=1; snpCond(het & ~remVals &pt2use)=2; snpCond(underGPNMB & ~remVals &pt2use)=3;
-
-[n,p,groups]=anovan(val2Test(~remVals & pt2use &  TDPCont'~=0 ),{snpCond(~remVals & pt2use &  TDPCont'~=0)})
-
-figure
-multcompare(groups)
-
-    [p,n]=prop_test(  [sum(val2Test'==0 & pt2use & ~remVals &  overGPNMB), sum(val2Test'==0 & pt2use & ~remVals & (underGPNMB)) ],...
-    [sum( pt2use &~remVals &overGPNMB), sum( pt2use & ~remVals &(underGPNMB)) ] ,'false')
-
+% 
+% overGPNMB= contains(snpStat,'TT'); %the major allele
+% het=contains(snpStat, 'CT');
+% underGPNMB=contains(snpStat,'CC'); %the minor allele
+% 
+% snpCond=nan(1, length(overGPNMB)   );
+% snpCond(overGPNMB & ~remVals &pt2use )=1; snpCond(het & ~remVals &pt2use)=2; snpCond(underGPNMB & ~remVals &pt2use)=3;
+% 
+% [n,p,groups]=anovan(val2Test(~remVals & pt2use &  TDPCont'~=0 ),{snpCond(~remVals & pt2use &  TDPCont'~=0)})
+% 
+% figure
+% multcompare(groups)
+% 
+%     [p,n]=prop_test(  [sum(val2Test'==0 & pt2use & ~remVals &  overGPNMB), sum(val2Test'==0 & pt2use & ~remVals & (underGPNMB)) ],...
+%     [sum( pt2use &~remVals &overGPNMB), sum( pt2use & ~remVals &(underGPNMB)) ] ,'false')
+% 
 
 
    % [p,n]=prop_test(  [sum(val2Test'==0 & pt2use & ~remVals &  overGPNMB), sum(val2Test'==0 & pt2use & ~remVals & (underGPNMB)) ],...

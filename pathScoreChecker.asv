@@ -63,9 +63,9 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
-brainAreaAtPlay='MF';
-pt2use=supraNuc ;
-pathType= 5; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
+brainAreaAtPlay='S';
+pt2use=corticoBasal ;
+pathType= 4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
 disName='CBS';
 plotType='both'; %currently just two options Stacked bar graph ('stackBar')
 %and a scatter bar graph (scatBar); both has both as subplots

@@ -160,7 +160,7 @@ underGPNMB=contains(snpCollect,'CC'); %the minor allele
 % xlabel('MOCA slope')
 
 
-pt2Plot=[ Alzheimer  ];
+pt2Plot=[ corticoBasal  ];
 val2Plot=slopeCollect;
 SNP=snpCollect;
 remVals= isnan(val2Plot) | cellfun(@isempty,SNP)  ;

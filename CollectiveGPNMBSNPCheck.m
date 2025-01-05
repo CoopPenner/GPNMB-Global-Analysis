@@ -78,9 +78,10 @@ figure
 
 
 %really clear and interesting trend for age at onset and disease duration
+
 figure
 subplot(1,2,1)
-snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
+snpPlotterGPNMB(GPNMBSNP,disDur2use, ALS, 'Disease Duration', 'ALS')
 subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 % subplot(2,2,3:4)
