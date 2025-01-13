@@ -1,3 +1,40 @@
+%% step 1, parse out all possible combinations to facilitate group creation
+
+addpath('/Users/pennerc/Documents/Documents - BGS-STU23-138/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
+%reading in path scores and other requisite info
+pathTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_updated_pathInfo.xlsx');
+allNames=pathTable.Properties.VariableNames;
+globalDx=pathTable.GlobalDx;
+pdDX=pathTable.PDCDx;
+CNDRDX=pathTable.CNDRDx;
+alsDX=pathTable.ALSDx;
+adDX=pathTable.ADCDx;
+snpStat=pathTable.rs199347;
+pathID=pathTable.INDDID;
+
+allNames=allNames(1:270); %removing supplementary SNP's and whatnot
+allNames=allNames(2:end);
+
+%outputting all brain areas
+tauContain=find(contains(allNames, 'Tau'));
+brainAreas=cell(1,length(tauContain));
+    for dd=1:length(tauContain)
+    brainAreas{dd}= allNames{tauContain(dd)}(1:end-3);
+    end
+%removing NeocorticalT because I don't really understand what that means
+brainAreas(strcmp('NeocorticalT',brainAreas))=[];
+
+
+% reading in cog scores
+cogData=readtable('/Volumes/PC60/InqueryDatasets/allCogScoreSlopesMMSE.csv');
+cogID=cogData.ID;
+cogSlope=cogData.cogSlope;
+endScorez=cogData.endScore;
+
+basicData=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
+
+
+
 
 
 %it's a little strange to initialize things here since I pass the dataTable
