@@ -34,6 +34,10 @@ endScorez=cogData.endScore;
 basicData=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
 
 
+% I miss Sambit
+
+
+
 %it's a little strange to initialize things here since I pass the dataTable
 %object to each of the downstream functions, but I feel it helps with
 %readability and fast iteration 
