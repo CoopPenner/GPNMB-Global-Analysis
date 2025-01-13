@@ -101,14 +101,15 @@ cogPathScatBarPlotr(val2Plot, remVals, overGPNMB,pt2use,path2Plot,secondPath,sec
 ylabel('cognitive decline slope')
 legend({'3+','rare-2+', 'none'})
 [r,p]=corrcoef(val2Plot(pt2use& (overGPNMB)& ~remVals ), path2Plot(pt2use& (overGPNMB)& ~remVals), 'rows','complete');
-title(['AA (over Production)  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
+title(['AA (over Production)  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ],  'FontSize', 15)
+ylabel('Slope of Cognitive Decline','FontSize',15)
 
 
 subplot(1,3,2)
 cogPathScatBarPlotr(val2Plot, remVals, het,pt2use,path2Plot,secondPath,secondPath2Plot,secondPathCut)
 [r,p]=corrcoef(val2Plot(pt2use& (het)& ~remVals ), path2Plot(pt2use& (het)& ~remVals), 'rows','complete');
-title(['AG  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
-legend({'3+','rare-2+', 'none'})
+title(['AG  SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ],  'FontSize', 15)
+legend({'3+','rare-2+', 'none'},'FontSize',14)
 
 
 subplot(1,3,3)
@@ -116,8 +117,8 @@ cogPathScatBarPlotr(val2Plot, remVals, underGPNMB,pt2use,path2Plot,secondPath,se
 
 [r,p]=corrcoef(val2Plot(pt2use & (underGPNMB) & ~remVals), path2Plot(pt2use& (underGPNMB)& ~remVals), 'rows','complete');
 
-title(['GG (under Production) SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ])
-legend({'3+','rare-2+', 'none'})
+title(['GG (under Production) SNP & cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ],  'FontSize', 15)
+legend({'3+','rare-2+', 'none'},'FontSize',14)
 
 
 
@@ -127,9 +128,9 @@ cogPathScatBarPlotr(val2Plot, remVals, true(1,length(underGPNMB))' ,pt2use,path2
 
 [r,p]=corrcoef(val2Plot(pt2use & ~remVals ), path2Plot(pt2use & ~remVals), 'rows','complete');
 
-title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
-legend({'3+','rare-2+', 'none'})
-
+title(['all Patients cog decline r=', num2str(r(2)), ' p=',num2str(p(2)), ], 'FontSize', 16)
+legend({'3+','rare-2+', 'none'},'FontSize',14)
+ylabel('Slope of Cognitive Decline','FontSize',15)
 
 
 

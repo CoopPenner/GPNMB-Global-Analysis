@@ -9,7 +9,7 @@ aSynName=[brainAreaAtPlay,'aSyn'];
 neuronDropName=[brainAreaAtPlay, 'NeuronLoss'];
 gliosisName=[brainAreaAtPlay,'Gliosis'];
 
-
+try
 
 for pathAtPlay=1:6 % I iterate through each path type of interest
 holderVar=nan(1,length(pathID));
@@ -58,3 +58,6 @@ holderVar=nan(1,length(pathID));
 end
 
 
+catch
+    b=1;
+end

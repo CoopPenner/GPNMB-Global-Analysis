@@ -49,7 +49,7 @@ overGPNMB= contains(snpStat,'TT'); %the major allele
 het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
-
+%% running
 
 % Parkinson's no diff re age of onset or death but the expected diff in the
 % allele freq
@@ -81,7 +81,7 @@ figure
 
 figure
 subplot(1,2,1)
-snpPlotterGPNMB(GPNMBSNP,disDur2use, ALS, 'Disease Duration', 'ALS')
+snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
 subplot(1,2,2)
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 % subplot(2,2,3:4)

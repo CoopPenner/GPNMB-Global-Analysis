@@ -1,4 +1,4 @@
-function [outputArg1,outputArg2] = snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType, disName, plotType, basicData   )
+function [outputArg1,outputArg2] = snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType, disName, plotType, ~   )
 %Our first basic analysis relating snp Status to levels of path burden,
 %currently separated based on asyn pure or asyn copath
 
@@ -119,11 +119,11 @@ b=bar([1,3,5], [overGPNMBRat;hetGPNMBRat;underGPNMBRat], 'stacked') ;
 
 
 
-legend('3+','2+','1+','rare','none')
+legend('3+','2+','1+','rare','none', 'FontSize', 15)
 
-ylabel('percent of total cases')
+ylabel('percent of total cases', 'FontSize', 15)
 
-title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ])
+title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ], 'FontSize', 20)
 
 ylim([0,120])
 
@@ -160,11 +160,11 @@ b=bar([1,3,5], [overGPNMBRat;hetGPNMBRat;underGPNMBRat], 'stacked') ;
 
 
 
-legend('3+','2+','1+','rare','none')
+legend('3+','2+','1+','rare','none', 'FontSize', 14)
 
-ylabel('percent of total cases')
+ylabel('percent of total cases', 'FontSize', 15)
 
-title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ])
+title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ], 'FontSize', 20)
 
 ylim([0,120])
 
@@ -183,7 +183,7 @@ b.FaceColor = 'flat';
 b.FaceAlpha=.3;
 b.BarWidth=1.5;
 b.CData(1,:) = [.8 .2 .5]; 
-ylabel([brainAreaAtPlay, ' ',pathName])
+ylabel([brainAreaAtPlay, ' ',pathName], 'FontSize', 15)
 a=gca; a.XTickLabel=[];
 hold on
 
@@ -209,8 +209,8 @@ b.CData(1,:) = [0 0.7 .25];
 c=scatter(rand(1, sum(~remVals & underGPNMB & pt2use) )+4.5, val2Test(~remVals & underGPNMB & pt2use), 'Marker', 'o' );
 c.CData(1,:) = [0.3 0.1 .6];
 
-legend({'AA (over Production)', 'GC','GG (under Production)'})
-title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ])
+legend({'AA (over Production)', 'GC','GG (under Production)'}, 'FontSize', 15)
+title([brainAreaAtPlay,' ', pathName, ' Burden in ', disName, ' Patients' ], 'FontSize', 20)
 ylim([0,5])
 
 
