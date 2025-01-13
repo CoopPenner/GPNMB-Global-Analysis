@@ -15,6 +15,8 @@ pathID=pathTable.INDDID;
 allNames=allNames(1:270); %removing supplementary SNP's and whatnot
 allNames=allNames(2:end);
 
+%hi 
+
 %outputting all brain areas
 tauContain=find(contains(allNames, 'Tau'));
 brainAreas=cell(1,length(tauContain));
