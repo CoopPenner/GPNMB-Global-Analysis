@@ -34,7 +34,6 @@ endScorez=cogData.endScore;
 basicData=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
 
 
-% I miss Sambit
 
 
 
