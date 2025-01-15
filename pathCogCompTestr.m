@@ -42,7 +42,7 @@ endScoreHold=endScorez(cogID==pathID(tt));
 
 
 
-
+%change 2
 val2Plot=cogScoreAtPlay;
 SNP=snpStat;
 remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;

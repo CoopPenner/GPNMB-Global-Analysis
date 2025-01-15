@@ -53,6 +53,7 @@ scatter(   rand(1, sum(~remVals & overGPNMB & pt2Plot & path2Plot1'==0 & path2Pl
 
 
 %het
+%change 
 
 b=bar(7.6,nanmean(val2Plot(~remVals & het & pt2Plot & path2Plot1'>=pathCut & path2Plot2'<pathCut )))  ;
 b.FaceColor = 'flat';
