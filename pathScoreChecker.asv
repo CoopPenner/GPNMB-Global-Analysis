@@ -1,6 +1,6 @@
 %% step 1, parse out all possible combinations to facilitate group creation
 
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
+addpath('/Users/pennerc/Documents/Documents - BGS-STU23-138/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
 %reading in path scores and other requisite info
 pathTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_updated_pathInfo.xlsx');
 allNames=pathTable.Properties.VariableNames;
@@ -14,6 +14,7 @@ pathID=pathTable.INDDID;
 
 allNames=allNames(1:270); %removing supplementary SNP's and whatnot
 allNames=allNames(2:end);
+
 
 %outputting all brain areas
 tauContain=find(contains(allNames, 'Tau'));
@@ -32,6 +33,9 @@ cogSlope=cogData.cogSlope;
 endScorez=cogData.endScore;
 
 basicData=readtable('/Volumes/PC60/InqueryDatasets/DetailedBasicInfo_allPatients.xlsx');
+
+
+
 
 
 %it's a little strange to initialize things here since I pass the dataTable
@@ -60,13 +64,15 @@ het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
+
+
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
-brainAreaAtPlay='S';
-pt2use=corticoBasal ;
+brainAreaAtPlay='CP';
+pt2use=ALS ;
 pathType= 4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
-disName='CBS';
+disName='ALS';
 plotType='both'; %currently just two options Stacked bar graph ('stackBar')
 %and a scatter bar graph (scatBar); both has both as subplots
 snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotType, basicData)
@@ -78,9 +84,9 @@ snpStatPathBurdenTestr(pt2use,brainAreaAtPlay, pathTable,pathType,disName,plotTy
 
 %% analysis 3 is there a relationship between path score and cognition and
 % is this in some way mediated by SNP status... 
-brainAreaAtPlay='MF';
-pt2use=corticoBasal;
-pathType=3; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+brainAreaAtPlay='Amyg';
+pt2use=Alzheimer;
+pathType=1; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
 secondPath=false;
 secondPath2Plot=5;
 secondPathCut=2;
@@ -91,14 +97,36 @@ snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType,secondPa
 %additionally adding in functionality for neuronal dropout and whatnot for
 %all path scores
 
-brainAreaAtPlay='Amyg';
-pt2use=Alzheimer;
-pathCut=1;
+brainAreaAtPlay='OFC';
+pt2use=allCases;
+pathCut=2;
 
 figure
 pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathCut   )
 
 %% analysis 5 just showing what brain area has the highest burden in a given disease
+
+pt2use=ALS;
+pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+
+diseaseName='ALS';
+brainAreas2Output=15; %num of areas to output max is 22 I think
+
+figure
+brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas, diseaseName,brainAreas2Output);
+
+%% analysis 6 let's map TDP spread throughout the brain, this is based on Brettschneider et al 2013
+
+
+
+pt2use=ALS;
+pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+
+diseaseName='ALS';
+brainAreas2Output=15; %num of areas to output max is 22 I think
+
+figure
+brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas, diseaseName,brainAreas2Output);
 
 
 

@@ -1,109 +1,122 @@
-function [] = pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogTable ,pathCut  )
+function [] = pathCOgCompTestraSynTDpAllArea(pt2use,allAreas, pathTable, cogTable ,pathCut  )
 
 
 
-
-globalDx=pathTable.GlobalDx;
-snpStat=pathTable.rs199347;
-pathID=pathTable.INDDID;
+pValz=nan( length(allAreas),1);
+rValz=nan( length(allAreas),1);
 
 
+  for areaCount=1:length(allAreas)
+      brainAreaAtPlay=allAreas{areaCount};
+   %   corrValues{areaCount,1}= brainAreaAtPlay;
 
-tauName=[brainAreaAtPlay,'Tau'];
-aBetaName=[brainAreaAtPlay,'AntibodyPlaques'];
-TDPName=[brainAreaAtPlay,'TDP43'];
-aSynName=[brainAreaAtPlay,'aSyn'];
+      [asynCont,tauCont,aBetaCont,TDPCont,neuronLossCont,~] = pathScoreGenerate(brainAreaAtPlay,pathTable);
+
+      remVals=   ~pt2use' | (TDPCont+ asynCont==0)   ;
+try
+      [r,p]=corrcoef(TDPCont(~remVals  ) ,neuronLossCont(~remVals  ),'rows','complete');
+
+pValz(areaCount)=p(2);
+rValz(areaCount)=r(2);
 
 
 
-
-
-cogID=cogTable.ID;
-cogSlope=cogTable.cogSlope;
-endScorez=cogTable.endScore;
-
-cogScoreAtPlay=nan(1,length(pathID));
-endScoreAtPlay=nan(1,length(pathID));
-
-%moving cognitive slope into the same format as path data
-  for tt=1:length(pathID)
-cogHold=cogSlope( cogID ==pathID(tt)   );
-endScoreHold=endScorez(cogID==pathID(tt));
-    if ~isempty(endScoreHold)
-    cogScoreAtPlay(tt)= cogHold;
-    endScoreAtPlay(tt)=endScoreHold;
-    end
   end
 
-  [asynCont,tauCont,aBetaCont,TDPCont,neuronLossCont,gliosisCont] = pathScoreGenerate(brainAreaAtPlay,pathTable);
-
-
-
-%change 2
-val2Plot=cogScoreAtPlay;
-SNP=snpStat;
-remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
-
-
-
-path2Plot1=asynCont;
-path2Plot2=TDPCont;
-
-cogPathSplitScatBarPlotr(val2Plot, remVals, SNP, pt2use, path2Plot1, path2Plot2, pathCut)
-
-% title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
-legend({'High Asyn Low TDP AA','High TDP Low Asyn AA', '','','High Asyn Low TDP AG','High TDP Low Asyn AG','','',...
-    'High Asyn Low TDP GG','High TDP Low Asyn GG','',''})
-TDPCont=TDPCont';
-
-%% second figure, comparing cog scores
-
-
-
-%% third figure let's show  inverse relationship between ASYN and TDP 
 
 
 
 
-asynRatCollect=[];
 
-for cut=0:4
+significantIdx = pValz < (.05/length(pValz));
 
-    remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)| ~pt2use | (TDPCont+ asynCont'==0)   ;
+% Extract significant regions and their corresponding values
+significantAreas = allAreas(significantIdx);
+significantRValues = rValz(significantIdx);
+significantPValues = pValz(significantIdx);
 
+% Normalize p-values for color mapping (more significant -> darker color)
+normPValues = log10(significantPValues); 
+normPValues = abs(normPValues); % Make values positive for color scaling
+normPValues = (normPValues - min(normPValues)) / (max(normPValues) - min(normPValues));
 
-GPNMBRatHolder=[sum(asynCont(~remVals & TDPCont<=cut    )==4  )/ sum(((~remVals & TDPCont<=cut     )))*100 ,...
-sum(asynCont(~remVals & TDPCont<=cut   )==3  )/ sum(((~remVals & TDPCont<=cut  )))*100,...
-sum(asynCont(~remVals & TDPCont<=cut   )==2  )/ sum(((~remVals & TDPCont<=cut   )))*100,...
-sum(asynCont(~remVals & TDPCont<=cut   )==1  )/ sum(((~remVals & TDPCont<=cut   )))*100,...
-sum(asynCont(~remVals  & TDPCont<=cut  )==0  )/ sum(((~remVals & TDPCont<=cut   )))*100];
+% Define a colormap 
+numBars = length(significantRValues);
+colors = hot(numBars); 
+colors = colors(round(normPValues * (size(colors, 1) - 1)) + 1, :);
 
-asynRatCollect=[ asynRatCollect;GPNMBRatHolder]; % going low to high
+% Create the bar graph
+figure;
+barGraph = bar(significantRValues, 'FaceColor', 'flat');
 
-
+% Apply colors based on p-value significance
+for i = 1:numBars
+    barGraph.CData(i, :) = colors(i, :);
 end
 
-  [r,p]=corrcoef(asynCont(~remVals  ) ,TDPCont(~remVals  ),'rows','complete');
+% Customize axes and labels
+a = gca;
+a.XTick = 1:numBars;  % Ensure there are xticks for all bars
+a.XTickLabel = significantAreas; 
+xtickangle(45);
+
+xlabel('Brain Region');
+ylabel('Correlation (r)');
+title('Significant Brain Region Correlations (Bonferroni Corrected)');
+
+% Add colorbar with appropriate label
+c = colorbar;
+colormap(hot);
+caxis([min(normPValues) max(normPValues)]);
+c.Ticks = linspace(min(normPValues), max(normPValues), 5);
+c.TickLabels = (logspace(log10(min(significantPValues)), log10(max(significantPValues)), 5));
+c.Label.String = 'log_{10}(p-values)';
+
+% Adjust figure for readability
+set(a, 'FontSize', 12);
+grid on;
 
 
-figure 
-
-c=bar(asynRatCollect,'stacked','FaceColor','flat');
-
-c(1).CData=[0.8,0,0];
-c(2).CData=[0,.8,.7];
-c(3).CData=[0.8,0.3567,0.1];
-c(4).CData=[.7,0,.8];
-c(5).CData=[0,0.7,0.4];
 
 
-a=gca; a.XTickLabel={'0 TDP','rare TDP', '1+ TDP', '2+ TDP', '3+ TDP' };
 
-legend({'3+ Asyn',' 2+ Asyn', ' 1+ Asyn', 'rare Asyn', '0 Asyn'}, 'FontSize',14)
-title(['Amygdalar Asyn Burden as a function of TDP burden in Alzheimer"s Patients ','r=', num2str(r(2)),' p=',num2str(p(2)) ], 'FontSize',18)
-ylabel('Percentage of Samples', 'FontSize',18)
+
 
 %% test zone
+
+
+% pathID=pathTable.INDDID;
+
+
+
+
+
+
+
+
+% cogID=cogTable.ID;
+% cogSlope=cogTable.cogSlope;
+% endScorez=cogTable.endScore;
+% 
+% cogScoreAtPlay=nan(1,length(pathID));
+% endScoreAtPlay=nan(1,length(pathID));
+% 
+% %moving cognitive slope into the same format as path data
+%   for tt=1:length(pathID)
+% cogHold=cogSlope( cogID ==pathID(tt)   );
+% endScoreHold=endScorez(cogID==pathID(tt));
+%     if ~isempty(endScoreHold)
+%     cogScoreAtPlay(tt)= cogHold;
+%     endScoreAtPlay(tt)=endScoreHold;
+%     end
+%   end
+
+
+
+
+
+
+
 % 
 % figure
 % 

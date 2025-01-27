@@ -1,14 +1,13 @@
-function [] = brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas   )
+function [] = tdpBrainStagerGPNMB(pt2use, pathTable, pathType,  brainAreas,  diseaseName   )
 
 
 
-%this will produce a simple overview of the path ratings from each brain
-%area for each patient type
+%I will talk to neuropathologists here about my scheme... but I am going to
+%have a spinal and cerebral progression scale
+%Spinal: 1) SC 2) Medulla 3) Pons (simple)
+%cerebral: 1) MC 2) Neocortical/Cingulate 3) SN GP CP and MB 4) DG Amyg
+%Hippo EC
 
-
-%initializing all variables
-globalDx=pathTable.GlobalDx;
-pathID=pathTable.INDDID;
 
 numSamp=nan(1,length(brainAreas));
 avgBurd=nan(1,length(brainAreas));
@@ -52,10 +51,14 @@ end
 %a simple bar graph 
 
 
+
+
+
+
 avgBurd(numSamp< 20)=nan; %just nanning out brain areas with fewer than 20 samples
 
 
-[highBurd,i]= maxk(avgBurd, 5);
+[highBurd,i]= maxk(avgBurd, numAreas2Output);
 
 
 
@@ -65,14 +68,14 @@ c=bar(highBurd');
 a=gca; a.XTickLabel=brainAreas(i);
 
 c.FaceColor='Flat';
-c.CData(1,:)=[.1,.1,.4];
-c.CData(2,:)=[.2,.3,.2];
-c.CData(3,:)=[.4,.4,.1];
-c.CData(4,:)=[.6,0,0];
-c.CData(5,:)=[.8,0,0];
+    
+    for dd=1:numAreas2Output
+    c.CData(dd,:)= [rand(1,3)] ;
+    end
 
+title([diseaseName, ' Patients ', pathName, ' Burden', ' Across Assesed brain regions' ], 'FontSize',15)
 
-
+ylabel([pathName, ' pathological ratings'] ,'FontSize', 15)
 
 
 end

@@ -1,14 +1,27 @@
-function [] = brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas,  diseaseName,numAreas2Output   )
-
-
-
-%this will produce a simple overview of the path ratings from each brain
-%area for each patient type
+function [] = tdpBrainStagerGPNMB(pt2use, pathTable, pathType,  brainAreas,  diseaseName   )
 
 
 %initializing all variables
-globalDx=pathTable.GlobalDx;
-pathID=pathTable.INDDID;
+snpStat=pathTable.rs199347;
+overGPNMB= contains(snpStat,'TT'); %the major allele
+het=contains(snpStat, 'CT');
+underGPNMB=contains(snpStat,'CC'); %the minor allele
+
+
+
+
+
+
+%I will talk to neuropathologists here about my scheme... but I am going to
+%have a spinal and cerebral progression scale
+%Spinal: 1) SC 2) Medulla 3) Pons (simple)
+%cerebral: 1) MC 2) Neocortical/Cingulate 3) SN GP CP and MB 4) DG Amyg
+%Hippo EC
+
+
+
+
+
 
 numSamp=nan(1,length(brainAreas));
 avgBurd=nan(1,length(brainAreas));
@@ -50,6 +63,10 @@ end
 
 %now ranking path burden in patients with sufficent samples and outputting
 %a simple bar graph 
+
+
+
+
 
 
 avgBurd(numSamp< 20)=nan; %just nanning out brain areas with fewer than 20 samples

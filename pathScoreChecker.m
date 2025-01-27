@@ -15,7 +15,6 @@ pathID=pathTable.INDDID;
 allNames=allNames(1:270); %removing supplementary SNP's and whatnot
 allNames=allNames(2:end);
 
-%hi 
 
 %outputting all brain areas
 tauContain=find(contains(allNames, 'Tau'));
@@ -72,7 +71,7 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 brainAreaAtPlay='SC';
 pt2use=ALS ;
-pathType= 3; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
+pathType= 4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
 disName='ALS';
 plotType='both'; %currently just two options Stacked bar graph ('stackBar')
 %and a scatter bar graph (scatBar); both has both as subplots
@@ -98,8 +97,8 @@ snpStatPathCogTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathType,secondPa
 %additionally adding in functionality for neuronal dropout and whatnot for
 %all path scores
 
-brainAreaAtPlay='Amyg';
-pt2use=Alzheimer;
+brainAreaAtPlay='OFC';
+pt2use=allCases;
 pathCut=2;
 
 figure
@@ -107,14 +106,27 @@ pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogData,pathCut   )
 
 %% analysis 5 just showing what brain area has the highest burden in a given disease
 
-pt2use=corticoBasal;
-pathType=5; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+pt2use=ALS;
+pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
 
-diseaseName='Corticobasal Syndrome';
+diseaseName='ALS';
+brainAreas2Output=15; %num of areas to output max is 22 I think
 
 figure
-brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas, diseaseName);
+brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas, diseaseName,brainAreas2Output);
 
+%% analysis 6 let's map TDP spread throughout the brain, this is based on Brettschneider et al 2013
+
+
+
+pt2use=ALS;
+pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+
+diseaseName='ALS';
+brainAreas2Output=15; %num of areas to output max is 22 I think
+
+figure
+brainPathBurdenOutputr(pt2use, pathTable, pathType,  brainAreas, diseaseName,brainAreas2Output);
 
 
 

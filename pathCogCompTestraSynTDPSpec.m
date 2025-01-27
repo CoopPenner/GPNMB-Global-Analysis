@@ -1,16 +1,11 @@
-function [] = pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogTable ,pathCut  )
+function [] = pathCogCompTestraSynTDPSpec(pt2use,brainAreaAtPlay, pathTable, cogTable ,pathCut  )
 
 
 
 
-globalDx=pathTable.GlobalDx;
-snpStat=pathTable.rs199347;
 pathID=pathTable.INDDID;
 
 
-overGPNMB= contains(snpStat,'TT'); %the major allele
-het=contains(snpStat, 'CT');
-underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 tauName=[brainAreaAtPlay,'Tau'];
 aBetaName=[brainAreaAtPlay,'AntibodyPlaques'];
@@ -42,25 +37,25 @@ endScoreHold=endScorez(cogID==pathID(tt));
 
 
 
-
 val2Plot=cogScoreAtPlay;
-SNP=snpStat;
-remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
+remVals= isnan(val2Plot)'    ;
 
 
 
 path2Plot1=asynCont;
 path2Plot2=TDPCont;
 
-cogPathSplitScatBarPlotr(val2Plot, remVals, SNP, pt2use, path2Plot1, path2Plot2, pathCut)
+cogPathSplitScatBarPlotrTDP_aSYN_Spec(val2Plot, remVals, pt2use, path2Plot1, path2Plot2, pathCut)
 
 % title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
-legend({'High Asyn Low TDP AA','High TDP Low Asyn AA', '','','High Asyn Low TDP AG','High TDP Low Asyn AG','','',...
-    'High Asyn Low TDP GG','High TDP Low Asyn GG','',''})
+legend({' Asyn path no TDP',' TDP path no Asyn','no TDP, no Asyn'})
 TDPCont=TDPCont';
 
+%% second figure, comparing cog scores
 
-%% second figure let's show  inverse relationship between ASYN and TDP 
+
+
+%% third figure let's show  inverse relationship between ASYN and TDP 
 
 
 
@@ -69,7 +64,7 @@ asynRatCollect=[];
 
 for cut=0:4
 
-    remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)| ~pt2use | (TDPCont+ asynCont'==0)   ;
+    remVals= ~pt2use | (TDPCont+ asynCont'==0)   ;
 
 
 GPNMBRatHolder=[sum(asynCont(~remVals & TDPCont<=cut    )==4  )/ sum(((~remVals & TDPCont<=cut     )))*100 ,...
@@ -91,9 +86,9 @@ figure
 c=bar(asynRatCollect,'stacked','FaceColor','flat');
 
 c(1).CData=[0.8,0,0];
-c(2).CData=[1,1,0];
-c(3).CData=[0.5123,0.3567,0.1310];
-c(4).CData=[1,1,0];
+c(2).CData=[0,.8,.7];
+c(3).CData=[0.8,0.3567,0.1];
+c(4).CData=[.7,0,.8];
 c(5).CData=[0,0.7,0.4];
 
 

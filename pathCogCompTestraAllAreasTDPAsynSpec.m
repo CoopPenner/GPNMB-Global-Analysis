@@ -1,10 +1,8 @@
-function [] = pathCogCompTestr(pt2use,brainAreaAtPlay, pathTable, cogTable ,pathCut  )
+function [] = pathCogCompTestraSynTDPAllArea(pt2use,brainAreaAtPlay, pathTable, cogTable ,pathCut  )
 
 
 
 
-globalDx=pathTable.GlobalDx;
-snpStat=pathTable.rs199347;
 pathID=pathTable.INDDID;
 
 
@@ -39,21 +37,18 @@ endScoreHold=endScorez(cogID==pathID(tt));
 
 
 
-%change 2
 val2Plot=cogScoreAtPlay;
-SNP=snpStat;
-remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
+remVals= isnan(val2Plot)'    ;
 
 
 
 path2Plot1=asynCont;
 path2Plot2=TDPCont;
 
-cogPathSplitScatBarPlotr(val2Plot, remVals, SNP, pt2use, path2Plot1, path2Plot2, pathCut)
+cogPathSplitScatBarPlotrTDP_aSYN_Spec(val2Plot, remVals, pt2use, path2Plot1, path2Plot2, pathCut)
 
 % title(['all Patients cog decline r=', num2str(r(2)), 'p=',num2str(p(2)), ])
-legend({'High Asyn Low TDP AA','High TDP Low Asyn AA', '','','High Asyn Low TDP AG','High TDP Low Asyn AG','','',...
-    'High Asyn Low TDP GG','High TDP Low Asyn GG','',''})
+legend({' Asyn path no TDP',' TDP path no Asyn','no TDP, no Asyn'})
 TDPCont=TDPCont';
 
 %% second figure, comparing cog scores
@@ -69,7 +64,7 @@ asynRatCollect=[];
 
 for cut=0:4
 
-    remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)| ~pt2use | (TDPCont+ asynCont'==0)   ;
+    remVals= isnan(val2Plot)' |  ~pt2use | (TDPCont+ asynCont'==0)   ;
 
 
 GPNMBRatHolder=[sum(asynCont(~remVals & TDPCont<=cut    )==4  )/ sum(((~remVals & TDPCont<=cut     )))*100 ,...
