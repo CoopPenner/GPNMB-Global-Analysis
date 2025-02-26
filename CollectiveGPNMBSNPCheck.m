@@ -49,6 +49,16 @@ overGPNMB= contains(snpStat,'TT'); %the major allele
 het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
+
+
+sum(      ~remVals & Parkinson )+ sum(      ~remVals & ALS ) + sum(      ~remVals & Alzheimer )+ sum(      ~remVals & MCI )
+
+sum(~remVals &HC)
+
+
+remVals= cellfun(@isempty,snpStat);
+
+
 %% running
 
 % Parkinson's no diff re age of onset or death but the expected diff in the
