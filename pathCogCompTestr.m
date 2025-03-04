@@ -46,7 +46,7 @@ remVals= isnan(val2Plot)' | cellfun(@isempty,SNP)    ;
 
 
 
-path2Plot1=asynCont;
+path2Plot1=tauCont;
 path2Plot2=TDPCont;
 
 cogPathSplitScatBarPlotr(val2Plot, remVals, SNP, pt2use, path2Plot1, path2Plot2, pathCut)

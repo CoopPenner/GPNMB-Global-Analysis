@@ -207,11 +207,19 @@ birthDay=dataTable.DOB;
 initDiff=testDate-birthDay;
 emptySNP=cellfun(@isempty,snp);
 trachDate=dataTable.TracheostomyDate;
-
-
-
-
+BMI=dataTable.BMI;
+UMNTotal=dataTable.UMNTotal;
+dx=dataTable.ElEscorialVisit;
+controlPt=contains(dx, 'Control');
+onsetSite=dataTable.ALSSymptomOnsetSite;
 hours2use=hours(initDiff); 
+
+overGPNMB=contains(snp,"TT");
+underGPNMB=contains(snp,"CC");
+het=contains(snp,"CT");
+emptySNP=cellfun(@isempty,snp);
+
+
 
 ageAtTest=hours2use/(24*365.25);
 
@@ -222,44 +230,77 @@ ageAtTest=hours2use/(24*365.25);
 
 %1 calculate time passed and get a Mat with the start scores for our model
 uniquePt=unique(ptID);
-scoreToTest=FRS;
+scoreToTest=Weight;
 
 startScoreMat=[];
 timePassedMat=[];
 numVisits=[];
 numVisitInd=[];
+totScoreDiffMat=[];
+totTimePassedMat=[];
+postTrachMat=[];
+snpTot=[];
+onsetSiteTot=cell(1,length(uniquePt));
+
 for dd=1:length(uniquePt)
-    datesAtPlay=visitDate(ptID==uniquePt(dd));
+    datesAtPlay=visitDate(ptID==uniquePt(dd) );
     scoresAtPlay=scoreToTest(ptID==uniquePt(dd));
         if isempty(scoresAtPlay) || isscalar(scoresAtPlay) 
             scoresAtPlay=nan;
         end
      [startDt,DtLoc]=min(datesAtPlay) ;  %finding earliest date (sometimes I think things come out of order)
+     [endDt,endDtLoc]=max(datesAtPlay);
      startScore=scoresAtPlay(DtLoc);
-    timePassed=datesAtPlay-startDt; %order doesn't matter here
+     endScore=scoresAtPlay(endDtLoc);
+    timeAtPlay=datesAtPlay-startDt; %order doesn't matter here
+    orderedDates=sort(datesAtPlay);
+%finding scores that come after a tracheostomy
+
+trachDates=trachDate(ptID==uniquePt(dd),1) ;
+if ~isnat(trachDates(1) ) 
+
+   postTrach=datesAtPlay> trachDates(1); 
+else
+    postTrach=false(length(datesAtPlay),1);
+
+end
     %converting to months
-    hours2use=hours(timePassed)/24; weeks=hours2use/7; timePassed=weeks/4;
-    if timePassed==0
-    timePassed=nan;
-    end
+
+[timePassed] = timeOutput(timeAtPlay);
+
+
+totTime=orderedDates(end)-orderedDates(1);    
+totTimePassed=timeOutput(totTime);
+
+
+totScoreDiff= scoresAtPlay(endDtLoc)-startScore;
+%being lazy and leveraging this for loop to grab onset site
+onSight=onsetSite(ptID==uniquePt(dd));
+onsetSiteTot{dd}=onSight{1};
+snpSight=snp(ptID==uniquePt(dd));
+snpTot=[snpTot;snpSight(1)];
 
     %generating our output Mats
-
     timePassedMat=[timePassedMat;timePassed];
     scoreHold=ones(length(timePassed),1); scoreHold=scoreHold* startScore;
     startScoreMat=[startScoreMat;scoreHold];
    visitHold=ones(length(timePassed),1); visitHold=visitHold* length(scoresAtPlay);
     numVisits=[numVisits;visitHold];
     numVisitInd=[numVisitInd,length(scoresAtPlay)];
+    totTimePassedHold=ones(length(timePassed),1); totTimePassedHold=totTimePassedHold* totTimePassed;
+    totTimePassedMat=[totTimePassedMat; totTimePassedHold];
+    totScoreDiffHold=ones(length(timePassed),1); totScoreDiffHold=totScoreDiffHold* totScoreDiff;
+    totScoreDiffMat=[totScoreDiffMat;totScoreDiffHold];
+    postTrachMat=[postTrachMat; postTrach];
+
 end
 
 
-filter2use= ptID~=112690 & ptID~=104346 &ptID~=110052 %~isnan(ageAtDeath) %~isnan(ageAtDeath) | ~isnat(trachDate);
-
+filter2use= ~controlPt & totScoreDiffMat<0  & numVisits>=3 & ~postTrachMat ;
 
 % Create table
-modelData = table(ptID(filter2use), timePassedMat(filter2use), bioSex(filter2use), ageAtTest(filter2use),   snp(filter2use), scoreToTest(filter2use), startScoreMat(filter2use), ageAtDeath(filter2use), ...
-    'VariableNames', {'ptID', 'timePassed', 'Sex', 'ageAtTest',  'SNP', 'Scores', 'startScore', 'ageAtDeath'});
+modelData = table(ptID(filter2use), timePassedMat(filter2use), bioSex(filter2use), ageAtTest(filter2use),   snp(filter2use), scoreToTest(filter2use), startScoreMat(filter2use), ageAtDeath(filter2use), numVisits(filter2use), ...
+    'VariableNames', {'ptID', 'timePassed', 'Sex', 'ageAtTest',  'SNP', 'Scores', 'startScore', 'ageAtDeath','numVisits'});
 
 % Convert categorical variables to factors
 modelData.Sex = categorical(modelData.Sex);
@@ -282,11 +323,23 @@ compare(glmeAlt, glme) % cool, significant in terms of model comp as well
 disp(glme);
 
 
+%% prop of upper motor symptoms
 
-% glme = fitglme(modelData, ...
-%     'ageAtDeath ~ 1 + Sex + startScore  + SNP * timePassed + (1|ptID)', ...
-%     'Distribution', 'Normal', 'Link', 'Identity');
-% 
+
+overGPNMB=contains(snpTot,"TT");
+underGPNMB=contains(snpTot,"CC");
+het=contains(snpTot,"CT");
+isUMN=contains(onsetSiteTot,'UMN');
+isLMN=contains(onsetSiteTot,'LMN');
+
+propUnder=(sum(isUMN &underGPNMB')/sum(underGPNMB))*100
+
+propHet=(sum(isUMN &het')/sum(het))*100
+
+propOver=(sum(isUMN &overGPNMB')/sum(overGPNMB))*100
+
+
+
 
 %%
 
@@ -299,15 +352,16 @@ modelDataTest = table(ptID(filter2use), timePassedMat(filter2use), bioSex(filter
 
 %% ok coolio but let's be very hardcore w/ a permutation test on this glme
 
+
 permNumber=1000;
 
 pValTrue=glme.Coefficients(9,6);
 pValTrue=pValTrue.pValue;
-falseScore= scoreToTest(  (randperm(length(scoreToTest))   ) );    
 
 permMat=nan(1,permNumber);
     for dd=1:permNumber
-falseScore= scoreToTest(  (randperm(length(scoreToTest))   ) );    
+falseScore= scoreToTest(  (randperm(length(scoreToTest(filter2use)))));
+
 modelData.Scores=falseScore;
 glmeFalse = fitglme(modelData, ...
     'Scores ~ 1 + Sex + startScore + ageAtDeath + SNP * timePassed + (1|ptID)', ...
