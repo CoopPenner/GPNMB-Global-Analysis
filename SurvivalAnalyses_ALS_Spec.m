@@ -23,7 +23,7 @@ bioSex=dataTable.Sex;
 testDate=dataTable.VisitDate;
 birthDay=dataTable.DOB;
 initDiff=testDate-birthDay;
-
+weight=dataTable.Weight;
 hours2use=hours(initDiff); 
 
 ageAtTest=hours2use/(24*365.25);
@@ -127,14 +127,14 @@ scoredValz=zscore(sumMat(~remValz,3));
 %% running each SNP separately 
 
 
-snpGroups = unique(sumMat(~remValz,2)); % Extract SNP categories
+uniqueSNPs = unique(sumMat(~remValz,2)); % Extract SNP categories
 
 figure;
 hold on;
 colors = {'c', 'm', 'g'}; % Assign colors to SNP groups
 
-for gg = 1:length(snpGroups)
-    snpValue = snpGroups(gg);
+for gg = 1:length(uniqueSNPs)
+    snpValue = uniqueSNPs(gg);
     
     % Filter data for the current SNP group
 
@@ -230,7 +230,7 @@ ageAtTest=hours2use/(24*365.25);
 
 %1 calculate time passed and get a Mat with the start scores for our model
 uniquePt=unique(ptID);
-scoreToTest=Weight;
+scoreToTest=FRS;
 
 startScoreMat=[];
 timePassedMat=[];
@@ -292,6 +292,7 @@ snpTot=[snpTot;snpSight(1)];
     totScoreDiffHold=ones(length(timePassed),1); totScoreDiffHold=totScoreDiffHold* totScoreDiff;
     totScoreDiffMat=[totScoreDiffMat;totScoreDiffHold];
     postTrachMat=[postTrachMat; postTrach];
+
 
 end
 
@@ -371,6 +372,37 @@ permMat(dd)=falsePval.pValue;
     end
 
 permP=sum(permMat< pValTrue)/permNumber;
+
+
+%% simple glme plot
+
+
+TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+
+snpStat=testData.rs199347;
+
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
+
+
+    figure;
+    hold on;
+    colorCode=[.2,.6,.8];
+plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
+
+
+TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
+TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
+colorCode=[.9,.4,.3];
+plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
+legend({'TT','','CT'});
+xlabel('Time (Months)');
+ylabel('ALSFRS')
+
+
 
 
 %% plotting
@@ -455,37 +487,221 @@ hold off;
 
 
 
-%% kaplan meir
+%% Cox on continuous values 
 
 
-% Extract SNP groups
-snpGroups = unique(sumMat(~remValz,2)); % Extract SNP categories
 
-figure;
-hold on;
-colors = {'c', 'm', 'g'}; % Colors for SNP groups
-legendLabels = {}; % Store legend labels
+%1 calculate time passed and get a Mat with the start scores for our model
+uniquePt=unique(ptID);
+scoreToTest=Weight;
 
-for gg = 1:length(snpGroups)
-    snpValue = snpGroups(gg);
-    
-    % Filter data for the current SNP group
-    idx = sumMat(:,2) == snpValue & ~remValz;
-    survTimes = sumMat(idx,3); % Survival times
-    eventOccurred = ones(size(survTimes)); % Assume no censoring for now
+startScoreMat=[];
+timePassedMat=[];
+numVisits=[];
+numVisitInd=[];
+totScoreDiffMat=[];
+totTimePassedMat=[];
+postTrachMat=[];
+snpTot=[];
+onsetSiteTot=cell(1,length(uniquePt));
 
-    % Kaplan-Meier Estimator
-    [f, x] = ecdf(survTimes, 'Function', 'survivor'); % Kaplan-Meier survival function
+for dd=1:length(uniquePt)
+    datesAtPlay=visitDate(ptID==uniquePt(dd) );
+    scoresAtPlay=scoreToTest(ptID==uniquePt(dd));
+        if isempty(scoresAtPlay) || isscalar(scoresAtPlay) 
+            scoresAtPlay=nan;
+        end
+     [startDt,DtLoc]=min(datesAtPlay) ;  %finding earliest date (sometimes I think things come out of order)
+     [endDt,endDtLoc]=max(datesAtPlay);
+     startScore=scoresAtPlay(DtLoc);
+     amtChange=scoresAtPlay/startScore;
 
-    % Plot survival curve
-    plot(x, f, 'Color', colors{gg}, 'LineWidth', 2);
-    legendLabels{end+1} = ['SNP ', num2str(snpValue)];
+     endPt= find(amtChange<=.8,1); endDt=datesAtPlay(endPt);
+     timeAtPlay=datesAtPlay-startDt; %order doesn't matter here
+    orderedDates=sort(datesAtPlay);
+%finding scores that come after a tracheostomy
+
+
+time2endPt = timeOutput( endDt-startDt);
+
+
+
+
+totScoreDiff= scoresAtPlay(endDtLoc)-startScore;
+%being lazy and leveraging this for loop to grab onset site
+onSight=onsetSite(ptID==uniquePt(dd));
+onsetSiteTot{dd}=onSight{1};
+snpSight=snp(ptID==uniquePt(dd));
+snpTot=[snpTot;snpSight(1)];
+
+    %generating our output Mats
+    timePassedMat=[timePassedMat;timePassed];
+    scoreHold=ones(length(timePassed),1); scoreHold=scoreHold* startScore;
+    startScoreMat=[startScoreMat;scoreHold];
+   visitHold=ones(length(timePassed),1); visitHold=visitHold* length(scoresAtPlay);
+    numVisits=[numVisits;visitHold];
+    numVisitInd=[numVisitInd,length(scoresAtPlay)];
+    totTimePassedHold=ones(length(timePassed),1); totTimePassedHold=totTimePassedHold* totTimePassed;
+    totTimePassedMat=[totTimePassedMat; totTimePassedHold];
+    totScoreDiffHold=ones(length(timePassed),1); totScoreDiffHold=totScoreDiffHold* totScoreDiff;
+    totScoreDiffMat=[totScoreDiffMat;totScoreDiffHold];
+    postTrachMat=[postTrachMat; postTrach];
+
+end
+%%
+
+
+% Extract unique patient IDs
+uniquePt = unique(ptID);
+time2endPt = []; % Survival time
+snpGroup = []; 
+
+for dd = 1:length(uniquePt)
+    datesAtPlay = visitDate(ptID == uniquePt(dd));
+    scoresAtPlay = FRS(ptID == uniquePt(dd));
+
+
+    [startDt, DtLoc] = min(datesAtPlay);
+    startScore = scoresAtPlay(DtLoc);
+    amtChange = scoresAtPlay / startScore;
+
+    endPt = find(amtChange <= 0.5, 1); % Find first time weight drops 20%
+
+    if ~isempty(endPt)
+        endDt = datesAtPlay(endPt);
+        time2endPt = [time2endPt; timeOutput(endDt - startDt)];
+    else
+        time2endPt = [time2endPt;nan]; % Last follow-up time
+    end
+
+    % Store SNP group for stratification
+    snpSight = snp(ptID == uniquePt(dd));
+    snpGroup = [snpGroup; snpSight(1)];
+
+if length(time2endPt) >dd
+b=1;
 end
 
-xlabel('Time (Months)','FontSize',20);
-ylabel('Survival Probability','FontSize',20);
-title('Kaplan-Meier Survival Curves by SNP Status','FontSize',20);
-legend(legendLabels);
+end
+
+% Get unique SNP groups
+emptySNP=cellfun(@isempty,snpGroup);
+uniqueSNPs = unique(snpGroup(~emptySNP));
+
+% Define colors for each SNP group
+colors = lines(length(uniqueSNPs)); 
+
+
+overGPNMB=contains(snpGroup,'TT');
+underGPNMB=contains(snpGroup,'CC');
+figure
+hold on
+histogram(time2endPt(overGPNMB &time2endPt<100),'BinWidth',2)
+histogram(time2endPt(underGPNMB&time2endPt<100),'BinWidth',2)
+
+%%
+
+% Extract patient data
+ptID = dataTable.INDDID;
+visitDate = dataTable.VisitDate;
+weight = dataTable.Weight;
+snp = dataTable.rs199347;
+ageAtDeath = dataTable.AgeatDeath;
+
+% Get unique patient IDs
+uniquePatients = unique(ptID);
+sumMat = [];
+
+% Loop through each patient
+for gg = 1:length(uniquePatients)
+    patientID = uniquePatients(gg);
+    
+    % Extract all records for this patient
+    patientData = dataTable(dataTable.INDDID == patientID, :);
+    
+    % Extract SNP status
+    snpStatus = unique(patientData.rs199347);
+    if isempty(snpStatus{1})
+        snpStatAtPlay = nan;
+    elseif strcmp(snpStatus{1}, 'CC')
+        snpStatAtPlay = 0;
+    elseif strcmp(snpStatus{1}, 'CT')
+        snpStatAtPlay = 1;
+    elseif strcmp(snpStatus{1}, 'TT')
+        snpStatAtPlay = 2;
+    end
+
+    % Extract weight and visit dates
+    datesAtPlay = patientData.VisitDate;
+    weightsAtPlay = patientData.FRSTotal;
+    
+    if isempty(weightsAtPlay) || isscalar(weightsAtPlay)
+        continue; % Skip if there's not enough data
+    end
+    
+    % Find earliest weight
+    [startDt, DtLoc] = min(datesAtPlay);
+    startWeight = weightsAtPlay(DtLoc);
+    
+    % Calculate percentage weight loss
+    percentLoss = weightsAtPlay / startWeight;
+    
+    % Find time to 20% weight loss
+    lossIdx = find(percentLoss <= 0.8, 1); % First time weight drops 30%
+    if ~isempty(lossIdx)
+        endDt = datesAtPlay(lossIdx);
+        timeToEvent = endDt - startDt;
+        eventOccurred = 1; % 20% weight loss occurred
+    else
+        timeToEvent = max(datesAtPlay) - startDt; % Last follow-up time
+        eventOccurred = 0; % Censored
+    end
+
+    % Convert time to months
+    hours2use = hours(timeToEvent) / 24;
+    weeks = hours2use / 7;
+    timeToEvent = weeks / 4;
+    
+    % Store results
+    sumMat = [sumMat; [patientID, snpStatAtPlay, timeToEvent, eventOccurred, patientData.AgeatDeath(1)]];
+end
+
+% Remove NaN values
+remValz = isnan(sumMat(:,2)) | isnan(sumMat(:,3));
+
+% Extract relevant values
+snpAtPlay = sumMat(~remValz, 2);
+timeToEvent = sumMat(~remValz, 3);
+eventOccurred = sumMat(~remValz, 4);
+
+% Fit Cox Proportional Hazards Model
+[b, logL, H, stats] = coxphfit(snpAtPlay, timeToEvent, 'Censoring', 1 - eventOccurred);
+
+%% **Stratified Kaplan-Meier Plot for Each SNP Group**
+uniqueSNPs = unique(snpAtPlay); % Extract SNP categories
+
+figure; hold on;
+colors = {'c', 'm', 'g'}; % Assign colors to SNP groups
+
+for gg = 1:length(uniqueSNPs)
+    snpValue = uniqueSNPs(gg);
+    
+    % Select patients with the current SNP
+    idx = (snpAtPlay == snpValue) ;
+    survTimes = timeToEvent(idx);
+    eventStatus = eventOccurred(idx);
+
+    % Fit Kaplan-Meier survival function
+    [H, T] = ecdf(survTimes, 'Function', 'survivor', 'Censoring', 1 - eventStatus);
+
+    % Plot survival curve
+    plot(T, H, 'Color', colors{gg}, 'LineWidth', 2);
+end
+
+xlabel('Time to 30% Weight Loss (Months)', 'FontSize', 20);
+ylabel('Survival Probability', 'FontSize', 20);
+title(['Survival Probability Stratified by rs199347 status, p=', num2str(stats.p)], 'FontSize', 20);
+legend({'CC', 'CT', 'TT'});
 grid on;
 hold off;
 xlim([0,200]);

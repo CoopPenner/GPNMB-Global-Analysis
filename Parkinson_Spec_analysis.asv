@@ -119,15 +119,17 @@ end
 
 %%
 
+emptySex=cellfun(@isempty, testData.Sex); %idk why but one patient doesn't have this recorded. 
 % Ensure MotorDx1 is a cell array
 if iscell(testData.MotorDx1)
     % Replace empty cells with an empty string
     emptyCells = cellfun(@isempty, testData.MotorDx1); 
     testData.MotorDx1(emptyCells) = {''}; % Replace empty entries with ''
-        filter2use = contains(string(testData.MotorDx1), 'Parkinson') & startScoreMat > 120 ;
+        filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex   ;
+
 else
     % If it's already a string or categorical, convert and apply directly
-    filter2use = contains(string(testData.MotorDx1), 'Parkinson') & startScoreMat > 120 ;
+    filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex  ;
 end
 
 %currently using the cutoff for moderate alzheimers 
@@ -184,3 +186,15 @@ compare(glmeAlt, glme) % cool, significant in terms of model comp as well
 
 disp(glme);
 
+%% plotting glme output and eventually running survival analysis
+
+
+estimateOver=glme.Coefficients(9,6);
+TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+
+snpStat=contains('TT',testData.rs199347)
+startPt= nanmean(startScoreMat(    contains('TT', testData.rs199347)     ))
+
+plotGLMESlope(TTestimate, TTLowerCI, TTupperCI)

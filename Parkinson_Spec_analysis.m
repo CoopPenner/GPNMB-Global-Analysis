@@ -9,7 +9,7 @@ score2test=1; % 1 is for DRS, 2 is for UPDRSII
 if score2test==1
     % DRS scores
     testData=readtable("/Volumes/PC60/InqueryDatasets/FinalizedSets/PDC_Psychometrics_all.xlsx");
-    scoreAtPlay=testData.DRSTotal;
+    scoreAtPlay=testData.DRSTotalAge;
 elseif score2test==2
     %UPDRSII scores
     testData= readtable('/Volumes/PC60/InqueryDatasets/FinalizedSets/UPDRS_Total.xlsx');
@@ -119,16 +119,17 @@ end
 
 %%
 
+emptySex=cellfun(@isempty, testData.Sex); %idk why but one patient doesn't have this recorded. 
 % Ensure MotorDx1 is a cell array
 if iscell(testData.MotorDx1)
     % Replace empty cells with an empty string
     emptyCells = cellfun(@isempty, testData.MotorDx1); 
     testData.MotorDx1(emptyCells) = {''}; % Replace empty entries with ''
-        filter2use = ~contains(string(testData.MotorDx1), 'Parkinson')  ;
+        filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex & startScoreMat>4  ;
 
 else
     % If it's already a string or categorical, convert and apply directly
-    filter2use = contains(string(testData.MotorDx1), 'Parkinson') ;
+    filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex  ;
 end
 
 %currently using the cutoff for moderate alzheimers 
@@ -185,3 +186,30 @@ compare(glmeAlt, glme) % cool, significant in terms of model comp as well
 
 disp(glme);
 
+%% plotting glme output and eventually running survival analysis
+
+
+TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+
+snpStat=testData.rs199347;
+
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
+
+
+    figure;
+    hold on;
+    colorCode=[.2,.6,.8];
+plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
+
+
+TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
+TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
+colorCode=[.9,.4,.3];
+plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
+legend({'TT','','CT'});
+xlabel('Time (Months)');
+ylabel('Estimated Age Adjusted DRS')

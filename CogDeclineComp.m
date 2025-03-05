@@ -74,7 +74,7 @@ startScoreMat=startScoreMat';
 
 
 
-filter2use= contains(dx, 'Alzheimer') & scoreToTest<=30  & ~isnan(scoreToTest)  & ~isnan(ageAtDeath) & ~isnan(scoreToTest); % define patient to use
+filter2use= contains(dx, 'Alzheimer') & scoreToTest<=30  & ~isnan(scoreToTest)  & startScoreMat>14; % define patient to use
 
 %currently using the cutoff for moderate alzheimers 
 
@@ -106,6 +106,36 @@ compare(glmeAlt, glme) % cool, significant in terms of model comp as well
 
 disp(glme);
 
+
+
+
+%% simple glme plot
+
+
+TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+
+snpStat=testData.rs199347;
+
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
+
+
+    figure;
+    hold on;
+    colorCode=[.2,.6,.8];
+plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
+
+
+TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
+TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
+colorCode=[.9,.4,.3];
+plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
+legend({'TT','','CT'});
+xlabel('Time (Months)');
+ylabel('MMSE')
 
 
 
