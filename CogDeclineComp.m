@@ -13,7 +13,7 @@ if dataRead
 %reading in all of our data
 
 %MOCA
- %dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_WithMoca_11_24.xlsx');
+% dataTable=readtable('/Volumes/PC60/InqueryDatasets/AllPatients_WithMoca_11_24.xlsx');
 
 %BNT
 % dataTable=readtable('/Volumes/PC60/InqueryDatasets/allPatients_extraSNP_BNT.xlsx');
@@ -45,8 +45,9 @@ ageAtDeath=dataTable.AgeatDeath;
 singleID=unique(globalID);
 scoreToTest=cogScore;
 
-startScoreMat=nan(1,length(globalID));
-timePassedMat= [];
+startScoreMat=nan(length(globalID),1);
+timePassedMat= nan(length(globalID),1);
+timePassedMatTest=[];
 idMat=[];
 for dd= 1:length(singleID)
     datesAtPlay=testDate(globalID==singleID(dd));
@@ -60,21 +61,27 @@ for dd= 1:length(singleID)
     %converting to months
     hours2use=hours(timePassed)/24; weeks=hours2use/7; timePassed=weeks/4;
  
-    %generating our output Mats
-    timePassedMat=[timePassedMat;timePassed];
+if sum(timePassed==0)>1 & length(timePassed)<4
+timePassed=timePassed*nan;
+end
 
+    %generating our output Mats
+    %timePassedMat=[timePassedMat;timePassed];
+timePassedMat(globalID==singleID(dd))=timePassed;
+
+timePassedMatTest=[timePassedMatTest;timePassed]; %this was a really gnarly bug, the INDD dataset isn't output in numerical order!!! Luckily we caught it
 startScoreMat(globalID== singleID(dd))= startScore;
+
     
     if length(timePassed)~= length(scoresAtPlay)
     disp(['Patient: ', num2str(singleID(dd)), ' - Length timePassed: ', num2str(length(timePassed)), ' - Length scoresAtPlay: ', num2str(length(scoresAtPlay))]);
     end
 end
-startScoreMat=startScoreMat';
 
 
+emptySNP=cellfun(@isempty,snp);
 
-
-filter2use= contains(dx, 'Alzheimer') & scoreToTest<=30  & ~isnan(scoreToTest)  & startScoreMat>14; % define patient to use
+filter2use= contains(dx, 'Alzheimer')  & scoreToTest<=30 & startScoreMat>= 14   & ~isnan(scoreToTest)   & ~emptySNP; % define patient to use
 
 %currently using the cutoff for moderate alzheimers 
 
@@ -239,6 +246,18 @@ hold off;
 %%
 
 
+%cogScore=dataTable.MoCATotal;
+cogScore=dataTable.MMSETotal;
+%cogScore=dataTable.DRSTotalAge;
+testDate=dataTable.TestDate;
+dx=dataTable.GlobalDx;
+snp=dataTable.rs199347;
+globalID=dataTable.INDDID;
+Edu=dataTable.Education;
+bioSex=dataTable.Sex;
+ageATTest=dataTable.AgeatTest;
+ageAtDeath=dataTable.AgeatDeath;
+
 
 
 slopeCollect=nan(1, length(singleID));
@@ -279,9 +298,10 @@ allTime=testYear+testMonth;
         allTime(idxToRemove)=[]; relScores(idxToRemove)=[]; %sometimes for some reason there are duplicate times
         allTime=allTime/12; %everything contextualized in years, since that is the standard by which slopes are presented
 
-        if ~isempty(relScores) & length(relScores)~=1  
+        if ~isempty(relScores) & length(relScores)>=3  
         scoreVec=diff(relScores);  sigChange=find( (relScores-relScores(1) ) <=-2 ,1); %here we identify when scores sink two points below first measure.      
         P=polyfit(allTime,relScores,1);
+        %P= (relScores(end)-relScores(1))/max(allTime); 
         slopeCollect(tt)=P(1);
 if P(1)<-30
     b=1;
@@ -289,11 +309,11 @@ end
 
 
         diagCollect(tt)=unique(dx(globalID==singleID(tt)));
-        snpCollect(tt)=unique(snpAtPlay(globalID==singleID(tt)));
+        snpCollect(tt)=unique(snp(globalID==singleID(tt)));
 
 allAge=ageATTest(globalID==singleID(tt)   ) ;  ageAtTestCollect(tt)= mean(allAge, "omitnan")  ; %I take the age at first test
 allEd=Edu(globalID==singleID(tt)); edCollect(tt)=allEd(1); % I take the starting educational attainment
-sexCollect(tt)=unique(Sex(globalID==singleID(tt))); %no categorization available in database for intersex individuals
+sexCollect{tt}=unique(bioSex(globalID==singleID(tt))); %no categorization available in database for intersex individuals
 IDCollect(tt)= singleID(tt);
 
         % ageAtTest(tt)=ageAtTest(globalID==globalID(tt)) ;
@@ -357,7 +377,7 @@ underGPNMB=contains(snpCollect,'CC'); %the minor allele
 % xlabel('MOCA slope')
 
 
-pt2Plot=[ corticoBasal  ];
+pt2Plot=[ Parkinson  ];
 val2Plot=slopeCollect;
 SNP=snpCollect;
 remVals= isnan(val2Plot) | cellfun(@isempty,SNP)  ;
@@ -410,10 +430,10 @@ anovan(val2Plot(~remVals), {underGPNMB(~remVals)})
 %datapoints, at least for moca so let's avoid confusion
 
 
-remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<15 | ~Alzheimer | abs(val2Plot) >20   ;
+remVals= isnan(val2Plot) | cellfun(@isempty,SNP) | startScore<14 | ~Parkinson | abs(val2Plot) >30   ;
 
 
-sexVar=categorical(sexCollect(~remVals))';
+sexVar=categorical(string(sexCollect(~remVals)))';
 startVar=startScore(~remVals)';
 endVar=endScore(~remVals)';
 slopeVar=slopeCollect(~remVals)';
@@ -436,7 +456,7 @@ glmeTable.rs199347 = reordercats(glmeTable.rs199347, {'TT', 'CC', 'CT'});
 
 
 glme = fitglme(glmeTable,...
-		'cogSlope ~ 1  + rs199347 + Sex + startScore + ageAtTest   ',...
+		'cogSlope ~ 1  + rs199347 + Sex + startScore + ageAtTest',...
 		'Distribution','normal','Link','identity','FitMethod','Laplace',...
 		'DummyVarCoding','reference')
 

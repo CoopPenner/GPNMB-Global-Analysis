@@ -10,7 +10,7 @@ function plotGLMESlope(estimate, lowerCI, upperCI,startPt,colorCode)
     y = (estimate * x) +startPt  ;
 
     % Compute constant confidence interval range
-    ci_range = abs(upperCI - lowerCI) / 2; % Half-width of the confidence interval
+    ci_range = abs(upperCI - lowerCI) ; 
     y_lower = y - ci_range;
     y_upper = y + ci_range;
     

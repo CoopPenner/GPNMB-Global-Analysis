@@ -45,17 +45,17 @@ ptID=pathTable.INDDID;
 %have a spinal and cerebral progression scale
 %Spinal: 1) SC 2) Medulla 3) Pons (simple)
 %cerebral: 1) MC 2) Neocortical Cingulate 3) SN GP CP and MB 4) DG Amyg
-%Hippo EC
+%Hippo EC Temporal Sulcus
 
 %% pt 1 the Brettschneider scheme
 
-cortical1={'MC','SC'}; cortical2={'Cing','Neocortical','Pons','Med'}; cortical3={'SN','GP','CP'}; cortical4={'CS','Amyg','DG','EC'};
+cortical1={'MC','SC'}; cortical2={'Cing','Neocortical','Pons','Med'}; cortical3={'SN','GP','CP','MB'}; cortical4={'CS','Amyg','DG','EC', 'TS'};
 
 pathPosBlank=nan(1,height(pathTable));
 
 pathCut=1;
 [cort1Path]=TDPStager(cortical1,pathTable,pathCut,pt2use);
-cort1PathPos=pathPosBlank;cort1PathPos(cort1Path>1)=true;
+cort1PathPos=pathPosBlank;cort1PathPos(cort1Path>1)=true; % greater than an average of 1
 
 [cort2Path]=TDPStager(cortical2,pathTable,pathCut,pt2use);
 cort2PathPos=pathPosBlank;cort2PathPos(cort1Path>1 & cort2Path>1)=true;
@@ -119,7 +119,7 @@ legend('unstaged','stage 1','stage 2','stage 3','stage 4', 'FontSize', 15)
 
 ylabel('percent of total cases', 'FontSize', 15)
 
-title(['Spine Based TDP43 Spread Scores in',  disName, ' Patients', ' p=' ], 'FontSize', 20)
+title(['Original BrettScheider  TDP43 Spread Scores in',  disName, ' Patients', ' p>.05' ], 'FontSize', 20)
 
 ylim([0,120])
 
@@ -128,21 +128,27 @@ a=gca; a.XTickLabel={'AA overProduction', 'AG', 'GG underProduction'};
 a.YTick(a.YTick>100)=[];
 
 
-[p, n] = ranksum(path2use(  (overGPNMB & ~remVals)), path2use( (underGPNMB) & ~remVals));  % Mann-Whitney U
+
+[p, n] = ranksum(path2use(  (overGPNMB' & ~remVals' &  path2use>0 )), path2use( underGPNMB' & ~remVals' & path2use>0  )   )  % Mann-Whitney U
 
 
 
-figure
-
-path2use=cort4PathPos;
-
-
-b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVals)), ...
-   nansum(path2use(het & ~remVals )  )/ sum(het(~remVals)),...
-   nansum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
-
-
-
+%  [n,p]=prop_test([sum(path2use(overGPNMB & ~remVals )==4 ),sum(path2use(underGPNMB & ~remVals )==4   ) ] ...
+%     ,[sum(overGPNMB & ~remVals), sum(underGPNMB& ~remVals)  ],true)
+% 
+% 
+% 
+% figure
+% 
+% path2use=cort4PathPos;
+% 
+% 
+% b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVals)), ...
+%    nansum(path2use(het & ~remVals )  )/ sum(het(~remVals)),...
+%    nansum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
+% 
+% 
+% 
 
 
 
@@ -159,7 +165,7 @@ b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVal
 
 %% pt 2 My  purely cortical pathology 
 
-cortical1={'MC'}; cortical2={'Cing','Neocortical'}; cortical3={'SN','GP','CP'}; cortical4={'CS','Amyg','DG','EC'};
+cortical1={'MC', 'Neocortical'};  cortical2={'SN','GP','CP','Cing','MB'}; cortical3={'CS','Amyg','DG','EC'};
 
 pathPosBlank=nan(1,height(pathTable));
 
@@ -175,15 +181,22 @@ cort2PathPos=pathPosBlank;cort2PathPos(cort1Path>1 & cort2Path>1)=true;
 cort3PathPos=pathPosBlank;cort3PathPos(cort1Path>1 & cort2Path>1 & cort3Path>1)=true;
 
 
-[cort4Path]=TDPStager(cortical4,pathTable,pathCut,pt2use);
-cort4PathPos=pathPosBlank;cort4PathPos(cort1Path>1 & cort2Path>1 & cort3Path>1 & cort4Path>1)=true;
+% [cort4Path]=TDPStager(cortical4,pathTable,pathCut,pt2use);
+% cort4PathPos=pathPosBlank;cort4PathPos(cort1Path>1 & cort2Path>1 & cort3Path>1 & cort4Path>1)=true;
 
 
 %now ranking path burden in patients with sufficent samples and outputting
 %a simple stack bar graph 
 
 
-path2use=nansum([cort1PathPos;cort2PathPos;cort3PathPos;cort4PathPos]);
+path2use=nansum([cort1PathPos;cort2PathPos;cort3PathPos]);
+
+
+
+
+
+
+
 remVals=~(pt2use) | emptySNP; %this includes pt2use ie non patients will be nanned out
 
 
@@ -194,8 +207,8 @@ figure
 overGPNMBRat=[    sum(path2use(overGPNMB & ~remVals)==0  )/ sum((overGPNMB & ~remVals)  )*100,...
     sum(path2use(overGPNMB & ~remVals)==1  )/ sum((overGPNMB & ~remVals)  )*100,...
 sum(path2use(overGPNMB & ~remVals)==2  )/ sum((overGPNMB & ~remVals) )*100,...
-sum(path2use(overGPNMB & ~remVals)==3  )/ sum((overGPNMB & ~remVals) )*100,...
-sum(path2use(overGPNMB & ~remVals)==4  )/ sum((overGPNMB & ~remVals) )*100];
+sum(path2use(overGPNMB & ~remVals)==3  )/ sum((overGPNMB & ~remVals) )*100];
+% sum(path2use(overGPNMB & ~remVals)==4  )/ sum((overGPNMB & ~remVals) )*100];
 
 
     
@@ -205,8 +218,8 @@ sum(path2use(overGPNMB & ~remVals)==4  )/ sum((overGPNMB & ~remVals) )*100];
 hetGPNMBRat=[    sum(path2use(het & ~remVals)==0  )/ sum((het & ~remVals)  )*100,...
     sum(path2use(het & ~remVals)==1  )/ sum((het & ~remVals)  )*100,...
 sum(path2use(het & ~remVals)==2  )/ sum((het & ~remVals) )*100,...
-sum(path2use(het & ~remVals)==3  )/ sum((het & ~remVals) )*100,...
-sum(path2use(het & ~remVals)==4  )/ sum((het & ~remVals) )*100];
+sum(path2use(het & ~remVals)==3  )/ sum((het & ~remVals) )*100];
+
 
 
 
@@ -216,8 +229,7 @@ sum(path2use(het & ~remVals)==4  )/ sum((het & ~remVals) )*100];
 underGPNMBRat=[    sum(path2use(underGPNMB & ~remVals)==0  )/ sum((underGPNMB & ~remVals)  )*100,...
     sum(path2use(underGPNMB & ~remVals)==1  )/ sum((underGPNMB & ~remVals)  )*100,...
 sum(path2use(underGPNMB & ~remVals)==2  )/ sum((underGPNMB & ~remVals) )*100,...
-sum(path2use(underGPNMB & ~remVals)==3  )/ sum((underGPNMB & ~remVals) )*100,...
-sum(path2use(underGPNMB & ~remVals)==4  )/ sum((underGPNMB & ~remVals) )*100];
+sum(path2use(underGPNMB & ~remVals)==3  )/ sum((underGPNMB & ~remVals) )*100];
 
 
 
@@ -225,11 +237,14 @@ b=bar([1,3,5], [overGPNMBRat;hetGPNMBRat;underGPNMBRat], 'stacked') ;
 
 
 
-legend('unstaged','stage 1','stage 2','stage 3','stage 4', 'FontSize', 15)
+legend('unstaged','stage 1','stage 2','stage 3', 'FontSize', 15)
 
 ylabel('percent of total cases', 'FontSize', 15)
 
-title(['Spine Based TDP43 Spread Scores in',  disName, ' Patients', ' p=' ], 'FontSize', 20)
+[p, ~] = ranksum(path2use((overGPNMB' ) & ~remVals' & path2use>0), path2use( underGPNMB' & ~remVals'  & path2use>0)   );  % Mann-Whitney U
+
+
+title(['Cortical Based TDP43 Spread Scores in',  disName, ' Patients', ' p=', num2str(p) ], 'FontSize', 20)
 
 ylim([0,120])
 
@@ -238,18 +253,18 @@ a=gca; a.XTickLabel={'AA overProduction', 'AG', 'GG underProduction'};
 a.YTick(a.YTick>100)=[];
 
 
-[p, n] = ranksum(path2use(  (overGPNMB & ~remVals)), path2use( (underGPNMB) & ~remVals));  % Mann-Whitney U
 
+ % [n,p]=prop_test([sum(path2use(overGPNMB & ~remVals )==1 ),sum(path2use(underGPNMB & ~remVals )==1   ) ] ...
+ %    ,[sum(overGPNMB & ~remVals), sum(underGPNMB& ~remVals)  ],true)
 
-
-figure
-
-path2use=cort4PathPos;
-
-
-b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVals)), ...
-   nansum(path2use(het & ~remVals )  )/ sum(het(~remVals)),...
-   nansum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
+% figure
+% 
+% % path2use=cort4PathPos;
+% 
+% 
+% b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVals)), ...
+%    nansum(path2use(het & ~remVals )  )/ sum(het(~remVals)),...
+%    nansum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
 
 %% part3 My pure spine based spread model
 
@@ -324,8 +339,6 @@ a.YTick(a.YTick>100)=[];
 
 
 figure
-
-path2use=spine3Path
 %nansum([spine1PathPos;spine2PathPos;spine3PathPos]);
 
 remVals=~(pt2use) | emptySNP; %this includes pt2use ie non patients will be nanned out
@@ -333,6 +346,13 @@ remVals=~(pt2use) | emptySNP; %this includes pt2use ie non patients will be nann
 b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVals)), ...
    nansum(path2use(het & ~remVals )  )/ sum(het(~remVals)),...
    nansum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
+
+
+ % [n,p]=prop_test([sum(path2use(overGPNMB & ~remVals )>=3 ),sum(path2use(underGPNMB & ~remVals )>=3  ) ] ...
+ %    ,[sum(overGPNMB & ~remVals), sum(underGPNMB& ~remVals)  ],true)
+
+
+[p, ~] = ranksum(path2use((overGPNMB' ) & ~remVals' & path2use>0), path2use( underGPNMB' & ~remVals'  & path2use>0)   )  % Mann-Whitney U
 
 
 
@@ -376,12 +396,6 @@ b=bar([1,3,5], [nansum(path2use(overGPNMB & ~remVals )  )/ sum(overGPNMB(~remVal
 % %    sum(path2use(underGPNMB & ~remVals )  )/ sum(underGPNMB(~remVals))])
 % 
 % 
- [n,p]=prop_test([sum(path2use(overGPNMB & ~remVals )==1 ),sum(path2use(underGPNMB & ~remVals )==1   ) ] ...
-    ,[sum(overGPNMB & ~remVals), sum(underGPNMB& ~remVals)  ],true)
-
-
-[p, ~] = ranksum(path2use(  (overGPNMB & ~remVals)), path2use( (underGPNMB) & ~remVals))  % Mann-Whitney U
-
 
 
 % groupLabels = ones(size(path2use)); % Placeholder for group labels

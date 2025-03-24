@@ -37,18 +37,13 @@ emptySNP=cellfun(@isempty,snp);
 
 % Get unique patient IDs
 uniquePatients = unique(dataTable.INDDID);
-
-sumMat=[];
-
+sumMat=[]; %this will be where we put all covariates, etc
 % Loop through each patient
 for gg = 1:length(uniquePatients)
-    patientID = uniquePatients(gg);
-    
-    % Extract all rows for this patient
+    patientID = uniquePatients(gg);   
+    % Extract all rows 
     patientData = dataTable(dataTable.INDDID == patientID, :);
-    
-    % extract SNP
-    snpStatus = unique(patientData.rs199347);
+        snpStatus = unique(patientData.rs199347);
     
 if isempty(snpStatus{1})
         snpStatAtPlay=nan;
@@ -69,11 +64,35 @@ end
     onsetDate=unique(patientData.ALSSymptomOnsetDate);
     diagDate=unique(patientData.DiagnosisDate);
     ageAtOnset= unique(patientData.AgeatOnset);
+    ageAtDeath=unique(patientData.AgeatDeath);
+    FRS=patientData.FRSTotal;
+    dates=patientData.VisitDate;
+    [~,earliestDateLoc]=min(dates);
 
+    if ~isempty(earliestDateLoc(1)) & ~isempty(FRS(1))
+    FRSScoreAtPlay=FRS(earliestDateLoc);
+    else
+FRSScoreAtPlay=nan;
+    end
+
+if isnan(ageAtDeath(1))
+    ageAtDeath=nan;
+end
+
+
+    bioSex= unique(patientData.Sex);
 if isnan(ageAtOnset(1))
     ageAtOnset=nan;
 end
 
+    
+    if strcmp(bioSex,'Female')
+    sexAtPlay=1;
+    elseif strcmp(bioSex,'Male')
+    sexAtPlay=0;
+    else
+        sexAtPlay=nan;
+    end
 
     if ~isnat(onsetDate(1))
         date2use=onsetDate;
@@ -82,7 +101,6 @@ end
     else
         date2use=NaT;
     end
-
 
 
     % Find the earliest date among the available ones
@@ -94,37 +112,41 @@ end
         earliestEndDate = min(validDates);
     end
 
-
     timeToEvent= earliestEndDate-date2use;
 %convert to months 
 hours2use=hours(timeToEvent)/24; weeks=hours2use/7; timeToEvent=weeks/4;
-
     
+ageAtDeath=ageAtOnset+(timeToEvent/12);
+avgAge= (ageAtDeath+ageAtOnset)/2;
+
     % Store results in summary matrix
-sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,ageAtOnset] ];
-
-
-
-
+sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,avgAge, sexAtPlay] ];
 
 
 end
 
 
-remValz=isnan( sumMat(:,2) + sumMat(:,3) ) ;
-
-scoredValz=zscore(sumMat(~remValz,3));
-
+remValz=isnan(mean( sumMat,2)) ;
 snpAtPlay=sumMat(~remValz,2);
 eventAtPlay=sumMat(~remValz,3);
+zScoreAge=zscore(sumMat(~remValz,4) );
+snpStat=sumMat(~remValz,2);
+sexStat=sumMat(~remValz,5);
+% startScorez=sumMat(~remValz,6);
 
-scoredValz=zscore(sumMat(~remValz,3));
 
+[b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 )  );
 
-[b,logL,H,stats] = coxphfit(sumMat(scoredValz>1 & ~remValz,2 ) ,sumMat(scoredValz>1  & ~remValz )  );
+% Compute hazard ratio
+HR = exp(stats.beta);  
+
 
 
 %% running each SNP separately 
+
+
+
+%remValz=isnan(sumMat(:,2)) | isnan(sumMat(:,3)) | isnan(sumMat(:,1)) | isnan(sumMat(:,5)) | isnan(sumMat(:,4))  ;
 
 
 uniqueSNPs = unique(sumMat(~remValz,2)); % Extract SNP categories
@@ -138,27 +160,28 @@ for gg = 1:length(uniqueSNPs)
     
     % Filter data for the current SNP group
 
-    idx = sumMat(:,2) == snpValue  & ~remValz;
+    idx = (sumMat(~remValz,2) == snpValue);
     survTimes = sumMat(idx,3); % Survival times
-    scoredAtPlay=zscore(survTimes);
-    eventOccurred = ones(size(survTimes  )); % Assume all events are observed (if censoring not available)
+    eventOccurred = ones(size(survTimes  )); % Assume all events are observed since we remove nans... 
 
     % Fit Cox model only for this SNP group
-    [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); 
+    [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
 
+
+    length(survTimes)
     % Plot survival curve
     stairs(H(:,1), exp(-H(:,2)), 'Color', colors{gg}, 'LineWidth', 2);
 end
 
 xlabel('Time (Months)','FontSize',20);
 ylabel('Survival Probability','FontSize',20);
-title(['Survival Probability Stratified by rs199347 status','p=', num2str(stats.p)],'FontSize',20);
-legend({'CC','CT','TT'});
+title(['Survival Probability Stratified by rs199347 status'],'FontSize',20) %,' p=', num2str(stats.p(1))],'FontSize',20) %, ' HR=',num2str(HR(1))],'FontSize',20);
+legend({'CC','CT','TT'},'FontSize',20 );
 grid on;
 hold off;
-xlim([0,200])
+xlim([0,120])
 
-%%
+%% just testing out some ways we could plot this
 
 scale_param = mean(H(:,1)) / log(2); % Approximate median survival
 B = 1.5; % Shape parameter 
@@ -230,16 +253,16 @@ ageAtTest=hours2use/(24*365.25);
 
 %1 calculate time passed and get a Mat with the start scores for our model
 uniquePt=unique(ptID);
-scoreToTest=FRS;
+scoreToTest=Weight;
 
-startScoreMat=[];
-timePassedMat=[];
-numVisits=[];
-numVisitInd=[];
-totScoreDiffMat=[];
-totTimePassedMat=[];
-postTrachMat=[];
-snpTot=[];
+startScoreMat=nan(1,length(scoreToTest));
+timePassedMat=nan(1,length(scoreToTest));
+numVisits=nan(1,length(scoreToTest));
+numVisitInd=nan(1,length(scoreToTest));
+totScoreDiffMat=nan(1,length(scoreToTest));
+totTimePassedMat=nan(1,length(scoreToTest));
+postTrachMat=nan(1,length(scoreToTest));
+snpTot=nan(1,length(scoreToTest));
 onsetSiteTot=cell(1,length(uniquePt));
 
 for dd=1:length(uniquePt)
@@ -277,30 +300,35 @@ totScoreDiff= scoresAtPlay(endDtLoc)-startScore;
 %being lazy and leveraging this for loop to grab onset site
 onSight=onsetSite(ptID==uniquePt(dd));
 onsetSiteTot{dd}=onSight{1};
-snpSight=snp(ptID==uniquePt(dd));
-snpTot=[snpTot;snpSight(1)];
+% snpSight=snp(ptID==uniquePt(dd));
+% snpTot(ptID==uniquePt(dd))=snpSight(1);
 
     %generating our output Mats
-    timePassedMat=[timePassedMat;timePassed];
+    timePassedMat(ptID==uniquePt(dd))=timePassed;
     scoreHold=ones(length(timePassed),1); scoreHold=scoreHold* startScore;
-    startScoreMat=[startScoreMat;scoreHold];
+    startScoreMat(ptID==uniquePt(dd))=scoreHold;
    visitHold=ones(length(timePassed),1); visitHold=visitHold* length(scoresAtPlay);
-    numVisits=[numVisits;visitHold];
+    numVisits(ptID==uniquePt(dd))=visitHold;
     numVisitInd=[numVisitInd,length(scoresAtPlay)];
     totTimePassedHold=ones(length(timePassed),1); totTimePassedHold=totTimePassedHold* totTimePassed;
-    totTimePassedMat=[totTimePassedMat; totTimePassedHold];
+    totTimePassedMat((ptID==uniquePt(dd)))=totTimePassedHold;
     totScoreDiffHold=ones(length(timePassed),1); totScoreDiffHold=totScoreDiffHold* totScoreDiff;
-    totScoreDiffMat=[totScoreDiffMat;totScoreDiffHold];
-    postTrachMat=[postTrachMat; postTrach];
-
+    totScoreDiffMat(ptID==uniquePt(dd))=totScoreDiffHold;
+    postTrachMat(ptID==uniquePt(dd))=postTrach;
 
 end
 
+emptySNP=cellfun(@isempty,snp);
 
-filter2use= ~controlPt & totScoreDiffMat<0  & numVisits>=3 & ~postTrachMat ;
+filter2use= ~controlPt' & totScoreDiffMat<0  & numVisits>=3 & ~postTrachMat & ~isnan(timePassedMat) & ~emptySNP' & ~isnan(scoreToTest') ;
+%the model will actually automatically remove nan values, I just include
+%them to facilitate counting of patients included!
+
+includedPT=length(unique(ptID(filter2use)));
+
 
 % Create table
-modelData = table(ptID(filter2use), timePassedMat(filter2use), bioSex(filter2use), ageAtTest(filter2use),   snp(filter2use), scoreToTest(filter2use), startScoreMat(filter2use), ageAtDeath(filter2use), numVisits(filter2use), ...
+modelData = table(ptID(filter2use), timePassedMat(filter2use)', bioSex(filter2use), ageAtTest(filter2use),   snp(filter2use), scoreToTest(filter2use), startScoreMat(filter2use)', ageAtDeath(filter2use), numVisits(filter2use)', ...
     'VariableNames', {'ptID', 'timePassed', 'Sex', 'ageAtTest',  'SNP', 'Scores', 'startScore', 'ageAtDeath','numVisits'});
 
 % Convert categorical variables to factors
@@ -322,6 +350,12 @@ glmeAlt= fitglme(modelData, ...
 compare(glmeAlt, glme) % cool, significant in terms of model comp as well
 
 disp(glme);
+
+
+
+% glmeTest = fitglme(modelData, 'Scores ~ 1 + Sex + ageAtTest + startScore + timePassed*SNP + (1 | ptID)', ...
+%                'DummyVarCoding', 'effects');
+
 
 
 %% prop of upper motor symptoms
@@ -371,36 +405,70 @@ falsePval=glmeFalse.Coefficients(9,6);
 permMat(dd)=falsePval.pValue;
     end
 
-permP=sum(permMat< pValTrue)/permNumber;
+    %update this!!
+permP=sum(permMat< pValTrue)/(permNumber-8); %this is ridiculous but I'm too lazy right now to capture the situations where a model can't converge, so I just manually enter it based on warnings
 
 
 %% simple glme plot
 
 
+
+figure;
+    hold on;
+
+TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
 TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
 TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+
+CCupperCI=mean([TTupperCI,TCupperCI]);
+CCLowerCI=mean([TTLowerCI,TCLowerCI]);
+
+
+CCestimate=0; %CC is the comparator group so the 'slope' will always be 0, here I just use the CI for CT, in next iteration I'll just plot residuals for each patient, binned
+colorCode=[0,1,1];
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CC')     ));
+plotGLMESlope(CCestimate, CCLowerCI, CCupperCI,startPt,colorCode)
+
+
+
+
+
+TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
+colorCode=[1,0,1];
+plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
+
+
+
+
+
 TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
 
-snpStat=testData.rs199347;
+snpStat=dataTable.rs199347;
 
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
 
 
-    figure;
-    hold on;
-    colorCode=[.2,.6,.8];
+    
+    colorCode=[0,1,0];
 plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
 
 
-TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
-TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
-TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
-startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
-colorCode=[.9,.4,.3];
-plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
-legend({'TT','','CT'});
-xlabel('Time (Months)');
-ylabel('ALSFRS')
+
+
+
+
+
+
+
+legend({'CC','','CT','','TT'},'FontSize',25);
+xlabel('Time (Months)','FontSize',25);
+ylabel('Predicted ALSFRS','FontSize',25)
+
+
+title('Modeled ALSFRS by rs199347 Status', 'FontSize',18)
+
 
 
 

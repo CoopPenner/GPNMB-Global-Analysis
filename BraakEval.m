@@ -15,18 +15,28 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
 %converting braak 6 to brakk 3
-
+BrakValMat=nan(1,length(Braak03));
 for dd=1:length(Braak03)
     if isempty(Braak03{dd})
         %in this context 1/2=1 3/4=2 5/6=3
-braak6Val=Braak06{dd}; braak6Convert=ceil(braak6Val/2); 
-Braak03{dd}=braak6Convert;
+braak6Val=Braak06{dd}; braak6Convert=ceil(str2num(braak6Val)/2); 
+if isempty(braak6Convert)
+    braak6Convert=nan;
+end
+BrakValMat(dd)=braak6Convert;
+    else
+    if strcmp(Braak03{dd},'N/A') || isempty(Braak03{dd})
+        BrakValMat(dd)=nan;
+    else
+    
+            BrakValMat(dd)=str2num(Braak03{dd});
+    end
     end
 end
 
 
 
-remVals= isnan(val2Test) | cellfun(@isempty,snpStat)  ;
+remVals=  cellfun(@isempty,snpStat)  ;
 
 
 %% plotting figures

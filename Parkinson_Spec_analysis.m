@@ -62,20 +62,16 @@ testData.MotorAgeOnset(isMatched) = refDataTable.MotorAgeOnset(validIdx);
 
 % Initialize the new variable in testData
 testData.LevodopaDose = nan(height(testData), 1);
-
 % Loop through each testData row to find the most recent VisitDate
 for dd = 1:height(testData)
     patientID = testData.INDDID(dd);
     testDate2use = testDate(dd);
-
     % Get all visit records 
     patientVisits = refDataTable(refDataTable.INDDID == patientID, :);
-
     % Find the most recent VisitDate before or equal to TestDate so even if
     % a date is closer to the later levodopa dose we assume earlier was
     % being given
     validVisits = patientVisits(patientVisits.VisitDate <= testDate2use, :);
-    
     if ~isempty(validVisits)  % If at least one valid visit is found
         [~, latestIdx] = max(validVisits.VisitDate); % Find the latest visit
         testData.LevodopaDose(dd) = validVisits.Levodopa(latestIdx);
@@ -88,53 +84,69 @@ end
 %1 calculate time passed and get a Mat with the start scores for our model
 singleID=unique(testData.INDDID);
 
-startScoreMat=[];
-timePassedMat= [];
-idMat=[];
+snpArray=nan(1,height(testData));
+
+startScoreMat=nan(height(testData),1);
+timePassedMat= nan(height(testData),1);
+idMat=nan(height(testData),1);
+snpMat=nan(height(testData),1);
+numVisits=nan(height(testData),1);
+
 for dd= 1:length(singleID)
     datesAtPlay=testDate(testData.INDDID==singleID(dd));
     scoresAtPlay=scoreAtPlay(testData.INDDID==singleID(dd));
         if isempty(scoresAtPlay) || isscalar(scoresAtPlay) %if nothing was collected or only one val was collected
             scoresAtPlay=nan;
+            numVisitsAtPlay=nan;
+            snpArray=nan;
         end
+
      [startDt,DtLoc]=min(datesAtPlay) ;  %finding earliest date (sometimes I think things come out of order)
      startScore=scoresAtPlay(DtLoc);
+     numVisitsAtPlay=length(scoresAtPlay);
     time2use=datesAtPlay-startDt; %order doesn't matter here
     %converting to months
     [timePassed] = timeOutput(time2use);
 
     %generating our output Mats
-    timePassedMat=[timePassedMat;timePassed];
+    timePassedMat(testData.INDDID==singleID(dd))=timePassed;
 
 
    startScoreHold=ones(length(timePassed),1); startScoreHold=startScoreHold* startScore;
 
-    startScoreMat= [startScoreMat; startScoreHold]; 
-    
-    if length(timePassed)~= length(scoresAtPlay)
-    disp(['Patient: ', num2str(singleID(dd)), ' - Length timePassed: ', num2str(length(timePassed)), ' - Length scoresAtPlay: ', num2str(length(scoresAtPlay))]);
-    end
+    startScoreMat(testData.INDDID==singleID(dd))= startScoreHold; 
+    visitHold=ones(length(startScoreHold),1); numVisitsAtPlay=visitHold*length(startScoreHold);
+    numVisits(testData.INDDID==singleID(dd))=numVisitsAtPlay;
+
+
+
+snpArray=testData.rs199347(testData.INDDID==singleID(dd));
+
+
+
+if isempty(snpArray(1))
+    snpMat(testData.INDDID==singleID(dd))=nan;
+elseif ~isempty(snpArray(1))
+snpMat(testData.INDDID==singleID(dd))=nan;
 end
 
 
-%%
+
+end
+
+
+
 
 emptySex=cellfun(@isempty, testData.Sex); %idk why but one patient doesn't have this recorded. 
 % Ensure MotorDx1 is a cell array
-if iscell(testData.MotorDx1)
     % Replace empty cells with an empty string
     emptyCells = cellfun(@isempty, testData.MotorDx1); 
     testData.MotorDx1(emptyCells) = {''}; % Replace empty entries with ''
-        filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex & startScoreMat>4  ;
 
-else
-    % If it's already a string or categorical, convert and apply directly
-    filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex  ;
-end
 
-%currently using the cutoff for moderate alzheimers 
 
 if score2test==1 % 1 is for DRS, 2 is for UPDRSII
+  filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex & numVisits>=4 & startScoreMat>4 ;
 
 % Create table
 modelData = table(testData.INDDID(filter2use), timePassedMat(filter2use), testData.Sex(filter2use), testData.AgeatTest(filter2use), testData.rs199347(filter2use), scoreAtPlay(filter2use), startScoreMat(filter2use), ...
@@ -151,6 +163,9 @@ glme = fitglme(modelData, ...
 
 else %if doing the motor score include levodopa dose as a cofactor 
 
+    filter2use = contains(string(testData.MotorDx1), 'Parkinson') & ~emptySex & numVisits>4  ;
+
+
 % Create table
 modelData = table(testData.INDDID(filter2use), timePassedMat(filter2use), testData.Sex(filter2use), testData.AgeatTest(filter2use), testData.rs199347(filter2use), scoreAtPlay(filter2use), startScoreMat(filter2use), testData.LevodopaDose(filter2use), ...
     'VariableNames', {'ptID', 'timePassed', 'Sex', 'ageAtTest', 'SNP', 'Scores', 'startScore', 'Levodopa'});
@@ -165,6 +180,7 @@ glme = fitglme(modelData, ...
     'Distribution','normal','Link','identity')
 
 disp(glme);
+
 
 
 end
@@ -189,13 +205,13 @@ disp(glme);
 %% plotting glme output and eventually running survival analysis
 
 
-TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
-TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
-TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+TTLowerCI=glme.Coefficients(10,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(10,8); TTupperCI=TTupperCI.Upper;
+TTestimate=glme.Coefficients(10,2); TTestimate=TTestimate.Estimate;
 
 snpStat=testData.rs199347;
 
-startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT') & filter2use    ));
 
 
     figure;
@@ -204,10 +220,10 @@ startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
 plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
 
 
-TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
-TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
-TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
-startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
+TCLowerCI=glme.Coefficients(9,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(9,8); TCupperCI=TCupperCI.Upper;
+TCestimate=glme.Coefficients(9,2); TCestimate=TCestimate.Estimate;
+startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT') & filter2use      ));
 colorCode=[.9,.4,.3];
 plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
 legend({'TT','','CT'});

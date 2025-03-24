@@ -74,8 +74,8 @@ sum(~emptySNP & ALS)
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
-brainAreaAtPlay='Pons';
-pt2use=ALS ;
+brainAreaAtPlay='Amyg';
+pt2use=DemLewy ;
 pathType= 4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP 5 is Neuron Loss 6 is Gliosis
 disName='ALS';
 plotType='both'; %currently just two options Stacked bar graph ('stackBar')
