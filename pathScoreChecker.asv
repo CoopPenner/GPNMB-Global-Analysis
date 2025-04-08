@@ -131,12 +131,12 @@ tdpBrainStagerGPNMB(pt2use, pathTable, disName )
 %% analysis 7 outputting total pathological burden for each species
 
 
-pt2use=Alzheimer;
-pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+pt2use=Parkinson;
+pathType=2; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
 
-diseaseName='All Patients';
+diseaseName='Alzheimer"s Disease';
 
-brainRegionCut=0.2; %brain regions must have this percentage of cases with the specified pathBurden to be included
+brainRegionCut=0.6; %brain regions must have this percentage of cases with the specified pathBurden to be included
 pathCut=1; %minimum pathology to be considered present
 
 

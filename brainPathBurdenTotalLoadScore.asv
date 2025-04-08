@@ -118,8 +118,8 @@ totAvg=mean(totalPathScores, 'omitnan');
 
 
 % Create table
-modelData = table(pathID(keepVals), ageAtOnset(keepVals), bioSex(keepVals), disDur(keepVals), snpStat(keepVals), totAvg',  ...
-    'VariableNames', {'ptID', 'ageAtOnset', 'Sex', 'diseaseDuration', 'SNP', 'pathScore'});
+modelData = table(pathID(keepVals), ageAtDeath(keepVals), bioSex(keepVals), disDur(keepVals), snpStat(keepVals), totAvg',  ...
+    'VariableNames', {'ptID', 'ageAtDeath', 'Sex', 'diseaseDuration', 'SNP', 'pathScore'});
 
 % Convert categorical variables to factors
 modelData.Sex = categorical(modelData.Sex);
@@ -130,7 +130,7 @@ modelData.SNP=categorical(modelData.SNP); %I'm not entirely sure if this is corr
 
 % Fit GLME 
 glme = fitglme(modelData, ...
-    'pathScore ~ 1 + Sex + ageAtOnset + diseaseDuration + SNP  + (1|ptID)', ...
+    'pathScore ~ 1 + Sex + ageAtDeath + diseaseDuration + SNP  + (1|ptID)', ...
     'Distribution', 'Normal', 'Link', 'Identity');
 
 
@@ -162,22 +162,22 @@ b.BarWidth=1.5;
 b.CData(1,:) = [0.3 0.1 .6];
 
 hold on
-a=scatter(rand(1, length(overAvg)  )+.5, overAvg, 'Marker', 'o', 'MarkerFaceColor',[.8 .2 .5],'SizeVariable',.5 );
+a=scatter(rand(1, length(overAvg)  )+.5, overAvg, 'Marker', 'o', 'MarkerFaceColor',[.8 .2 .5], );
 a.CData=[.8 .2 .5]; 
 
-b=scatter(rand(1, length(hetAvg)  )+2.5, hetAvg, 'Marker', 'o', 'MarkerFaceColor',[0 0.7 .25],'SizeVariable',.5 );
+b=scatter(rand(1, length(hetAvg)  )+2.5, hetAvg, 'Marker', 'o' );
 b.CData(1,:) = [0 0.7 .25];
 
-c=scatter(rand(1, length(underAvg)  )+4.5, underAvg, 'Marker', 'o', 'MarkerFaceColor',[0.3 0.1 .6],'SizeVariable',.5 );
+c=scatter(rand(1, length(underAvg)  )+4.5, underAvg, 'Marker', 'o' );
 c.CData(1,:) = [0.3 0.1 .6];
 
 legend({'AA (over Production)', 'GA','GG (under Production)'}, 'FontSize', 15)
 
-pVal=glme.Coefficients.pValue(end);
 
-title([diseaseName, ' Patients ', pathName, ' Burden', ' Across All brain regions with Pathology, p=',num2str(pVal)  ], 'FontSize',30,'FontWeight','bold')
 
-ylabel([pathName, ' pathological ratings'] ,'FontSize', 25,'FontWeight','bold')
+title([diseaseName, ' Patients ', pathName, ' Burden', ' Across All brain regions with Pathology' ], 'FontSize',15)
+
+ylabel([pathName, ' pathological ratings'] ,'FontSize', 15)
 
 
 
