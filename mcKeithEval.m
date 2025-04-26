@@ -1,4 +1,4 @@
-function [] = BraakEval(pt2use, pathTable, disName, plotType, pathName   )
+function [] = mcKeithEval(pt2use, pathTable, disName, plotType, pathName   )
 %Our first basic analysis relating snp Status to levels of path burden,
 %currently separated based on asyn pure or asyn copath
 
@@ -7,39 +7,52 @@ function [] = BraakEval(pt2use, pathTable, disName, plotType, pathName   )
 
 snpStat=pathTable.rs199347;
 
-Braak03=pathTable.Braak03; Braak06=pathTable.Braak06;
+mcKeith=pathTable.DLBType; 
 overGPNMB= contains(snpStat,'TT'); %the major allele
 het=contains(snpStat, 'CT');
 underGPNMB=contains(snpStat,'CC'); %the minor allele
 
 
 
-%converting braak 6 to brakk 3
-BrakValMat=nan(1,length(Braak03));
-for dd=1:length(Braak03)
-    if isempty(Braak03{dd})
+mcKeithValMat=nan(1,length(mcKeith));
+for dd=1:length(mcKeith)
+    if isempty(mcKeith{dd})
         %in this context 1/2=1 3/4=2 5/6=3
-braak6Val=Braak06{dd}; braak6Convert=ceil(str2num(braak6Val)/2); 
-if isempty(braak6Convert)
-    braak6Convert=nan;
-end
-BrakValMat(dd)=braak6Convert;
+        mcKeithValMat(dd)=nan;
+    elseif strcmp(mcKeith{dd},'None')
+        mcKeithValMat(dd)=0;
+    elseif strcmp(mcKeith{dd},'Amygdala Predominant')
+        mcKeithValMat(dd)=1;
+    elseif strcmp(mcKeith{dd},'Brainstem Predominant')
+        mcKeithValMat(dd)=2;
+    elseif strcmp(mcKeith{dd},'Transitional or Limbic')
+        mcKeithValMat(dd)=3;
+    elseif strcmp(mcKeith{dd},'Diffuse or Neocortical')
+        mcKeithValMat(dd)=4;
     else
-    if strcmp(Braak03{dd},'N/A') || isempty(Braak03{dd})
-        BrakValMat(dd)=nan;
-    else
-    
-            BrakValMat(dd)=str2num(Braak03{dd});
-    end
+        mcKeithValMat(dd)=nan;
     end
 end
 
 
 
-val2Test=BrakValMat;
+val2Test=mcKeithValMat;
 
 
-remVals=  cellfun(@isempty,snpStat) | isnan(val2Test)' ;
+
+
+
+
+
+remVals=  cellfun(@isempty,snpStat) | isnan(val2Test')  ;
+
+
+
+
+
+
+
+
 
 
 %% plotting figures
@@ -130,7 +143,7 @@ b=bar([1,3,5], [overGPNMBRat;hetGPNMBRat;underGPNMBRat], 'stacked') ;
 
 
 
-legend('9','8','7','6','5','4','3','2','1', 'FontSize', 14)
+legend('0','1','2','3','4', 'FontSize', 14)
 
 ylabel('percent of total cases', 'FontSize', 15)
 
@@ -150,25 +163,27 @@ figure
 subplot(1,2,1)
 
 
-   overGPNMBRat=[
-        sum(val2Test(~remVals & overGPNMB & pt2use )==3  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
-        sum(val2Test(~remVals & overGPNMB & pt2use )==2  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
-        sum(val2Test(~remVals & overGPNMB & pt2use )==1  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
-        sum(val2Test(~remVals & overGPNMB & pt2use )==0  )/ sum(((~remVals & overGPNMB & pt2use )))*100];
+   overGPNMBRat=[sum(val2Test(~remVals & overGPNMB & pt2use )==0  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
+                        sum(val2Test(~remVals & overGPNMB & pt2use )==1  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
+                 sum(val2Test(~remVals & overGPNMB & pt2use )==2  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
+                 sum(val2Test(~remVals & overGPNMB & pt2use )==3  )/ sum(((~remVals & overGPNMB & pt2use )))*100,...
+          sum(val2Test(~remVals & overGPNMB & pt2use )==4  )/ sum(((~remVals & overGPNMB & pt2use )))*100];
     
 
-hetGPNMBRat=[
-             sum(val2Test(~remVals & het & pt2use )==3  )/ sum(((~remVals & het & pt2use )))*100,...
-             sum(val2Test(~remVals & het & pt2use )==2  )/ sum(((~remVals & het & pt2use )))*100,...
-             sum(val2Test(~remVals & het & pt2use )==1  )/ sum(((~remVals & het & pt2use )))*100,...
-             sum(val2Test(~remVals & het & pt2use )==0  )/ sum(((~remVals & het & pt2use )))*100]; 
+   hetGPNMBRat=[sum(val2Test(~remVals & het & pt2use )==0  )/ sum(((~remVals & het & pt2use )))*100,...
+                        sum(val2Test(~remVals & het & pt2use )==1  )/ sum(((~remVals & het & pt2use )))*100,...
+                 sum(val2Test(~remVals & het & pt2use )==2  )/ sum(((~remVals & het & pt2use )))*100,...
+                 sum(val2Test(~remVals & het & pt2use )==3  )/ sum(((~remVals & het & pt2use )))*100,...
+          sum(val2Test(~remVals & het & pt2use )==4  )/ sum(((~remVals & het & pt2use )))*100];
+    
 
 
-underGPNMBRat=[
-sum(val2Test(~remVals & underGPNMB & pt2use )==3  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
-sum(val2Test(~remVals & underGPNMB & pt2use )==2  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
-sum(val2Test(~remVals & underGPNMB & pt2use )==1  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
-sum(val2Test(~remVals & underGPNMB & pt2use )==0  )/ sum(((~remVals & underGPNMB & pt2use )))*100];
+   underGPNMBRat=[sum(val2Test(~remVals & underGPNMB & pt2use )==0  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
+                        sum(val2Test(~remVals & underGPNMB & pt2use )==1  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
+                 sum(val2Test(~remVals & underGPNMB & pt2use )==2  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
+                 sum(val2Test(~remVals & underGPNMB & pt2use )==3  )/ sum(((~remVals & underGPNMB & pt2use )))*100,...
+          sum(val2Test(~remVals & underGPNMB & pt2use )==4  )/ sum(((~remVals & underGPNMB & pt2use )))*100];
+    
 
 
 
@@ -179,9 +194,9 @@ b=bar([1,3,5], [overGPNMBRat;hetGPNMBRat;underGPNMBRat], 'stacked') ;
 
 
 
-legend('3','2','1', 'FontSize', 14)
+legend('0','1','2','3','4', 'FontSize', 14)
 
-ylabel('percent of total cases', 'FontSize', 15)
+ylabel('percent of total cases', 'FontSize', 20)
 
 
 title([ pathName, ' Score in ', disName, ' Patients' ], 'FontSize', 20)
@@ -204,7 +219,7 @@ b.FaceColor = 'flat';
 b.FaceAlpha=.3;
 b.BarWidth=1.5;
 b.CData(1,:) = [.8 .2 .5]; 
-ylabel([pathName], 'FontSize', 15)
+ylabel([pathName, ' Score'], 'FontSize', 20)
 a=gca; a.XTickLabel=[];
 hold on
 
@@ -230,14 +245,31 @@ b.CData(1,:) = [0 0.7 .25];
 c=scatter(rand(1, sum(~remVals & underGPNMB & pt2use) )+4.5, val2Test(~remVals & underGPNMB & pt2use), 'Marker', 'o' );
 c.CData(1,:) = [0.3 0.1 .6];
 
-legend({'AA (over Production)', 'AG','GG (under Production)'}, 'FontSize', 15)
+legend({'TT (over Production)', 'CT','CC (under Production)'}, 'FontSize', 15)
 title([pathName, ' Score in ', disName, ' Patients' ], 'FontSize', 20)
 ylim([0,9])
 
 
 
-[p, ~] = ranksum(val2Test(overGPNMB'  & ~remVals' & pt2use' ), val2Test( underGPNMB' &  pt2use'  & ~remVals')   )  % Mann-Whitney U
+
+[p, ~] = ranksum(val2Test(overGPNMB'  & ~remVals' & pt2use' ), val2Test( underGPNMB' &  pt2use'  & ~remVals')   );  % Mann-Whitney U
+
+numPatients=sum(pt2use & ~remVals);
+
+title([pathName, ' Score in ', disName, ' Patients p=', num2str(p), ' ',num2str(numPatients), 'Patients Analyzed'  ], 'FontSize', 20)
+
+
+
+overAvg=nanmean(val2Test(overGPNMB'& ~remVals' & pt2use'))
+underAvg=nanmean(val2Test(underGPNMB'& ~remVals' & pt2use'))
+hetAvg=nanmean(val2Test(het'& ~remVals' & pt2use'))
 
 
 end
+
+
+
+
+end
+
 

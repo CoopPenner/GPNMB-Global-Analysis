@@ -62,6 +62,7 @@ ParkinsonianDem=corticoBasal|DemLewy;
 other= ~neuroPanel;
 HC=(contains(globalDx, 'Normal')); 
 allDis=~HC;
+synucleinopathy= corticoBasal | Parkinson |DemLewy ;
 
 overGPNMB = contains(snpStat,'TT'); %the major allele
 het=contains(snpStat, 'CT');
@@ -70,7 +71,6 @@ underGPNMB=contains(snpStat,'CC'); %the minor allele
 emptySNP= cellfun(@isempty, snpStat);
 
 
-sum(~emptySNP & ALS)
 %% analysis 1 is there a relationship between SNP status and path burden
 % we will look at all path and copath separately, with an emphasis on aSYN
 
@@ -131,10 +131,10 @@ tdpBrainStagerGPNMB(pt2use, pathTable, disName )
 %% analysis 7 outputting total pathological burden for each species
 
 
-pt2use=Alzheimer;
-pathType=4; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
+pt2use=synucleinopathy;
+pathType=2; %1 is Asyn, 2 is aBeta, 3 is Tau, 4 is TDP  5 is neuron loss 6 is gliosis
 
-diseaseName='All Patients';
+diseaseName='Synucleionapthy';
 
 brainRegionCut=0.2; %brain regions must have this percentage of cases with the specified pathBurden to be included
 pathCut=1; %minimum pathology to be considered present
@@ -143,31 +143,104 @@ pathCut=1; %minimum pathology to be considered present
 brainPathBurdenTotalLoadScore(pt2use, pathTable, pathType,  brainAreas, diseaseName,pathCut,brainRegionCut);
 
 
+
+
 %% analysis 8 now aBeata Spread
 
-pt2use=allDis;
-pathType=3;
+pt2use=ALS;
+pathType=1;
 disName='Alzheimer"s';
 plotType='both'; %currently just two options Stacked bar graph ('stackBar')
 
 pathSpreadStandardTestr(pt2use, pathTable,pathType, disName, plotType  )
 
 
+%% spread analyses
 
-%% Braak eval 
+
+
+spreadTable=readtable('/Volumes/PC60/InqueryDatasets/FinalizedSets/allPathSpreadData.xlsx');
+
+
+
+allNames=spreadTable.Properties.VariableNames;
+globalDx=spreadTable.ClinicalDx1;
+snpStat=spreadTable.rs199347;
+pathID=spreadTable.INDDID;
+allNames=allNames(1:270); %removing supplementary SNP's and whatnot
+allNames=allNames(2:end);
+
+%it's a little strange to initialize things here since I pass the dataTable
+%object to each of the downstream functions, but I feel it helps with
+%readability and fast iteration 
+
+Parkinson= (contains(globalDx, 'Parkinson') );
+Alzheimer= (contains(globalDx, 'Alzheimer')  );  
+ALS= contains(globalDx, 'Amyotrophic');
+DemLewy= (contains(globalDx, 'Dementia with Lewy Bodies'));
+MCI= (contains(globalDx, 'Mild cognitive impairment')); 
+corticoBasal= contains(globalDx, 'Corticobasal syndrome');
+bvFTD= (contains(globalDx, 'bvFTD-FTLD')); 
+PPA= (contains(globalDx, 'PPA')); 
+supraNuc= (contains(globalDx, 'Progressive supranuclear palsy')   );
+neuroPanel= Alzheimer | DemLewy  | Parkinson| corticoBasal ;
+ParkinsonianPanel= Parkinson |corticoBasal |supraNuc |DemLewy;
+ofInterest=ALS|Parkinson |Alzheimer;
+ParkinsonianDem=Parkinson|DemLewy;
+other= ~DemLewy;
+HC=(contains(globalDx, 'Normal')); 
+allDis=~HC;
+MSA= contains(globalDx,'Multiple system atrophy');
+
+synucleinopathy=   Parkinson |DemLewy ;
+
+overGPNMB = contains(snpStat,'TT'); %the major allele
+het=contains(snpStat, 'CT');
+underGPNMB=contains(snpStat,'CC'); %the minor allele
+
+emptySNP= cellfun(@isempty, snpStat);
+
+
+
+
+
+%% now Tau Spread
+
+pt2use=Alzheimer;
+disName='Alzheimer"s';
+plotType='both'; %currently just two options Stacked bar graph ('stackBar')
+
 
 spreadTable.Braak03;
 spreadTable.Braak06;
 
 
- BraakEval(pt2use, spreadTable, disName, plotType   )
-
-
-%% analysis 9 now Tau Spread
-
+ BraakEval(pt2use, spreadTable, disName, plotType,"Tau"   )
 
 %% analysis 10 now Asyn
 
+allDiag=unique(globalDx);
+
+pdTest= (contains(globalDx, "Parkinson's Disease") );  
+
+pdTest=contains(neuroDx,"Lewy") | contains(neuroDx,"Parkinson");
+
+neuroDx= spreadTable.NPDx1;
+
+lewyBodyNeuro=contains(neuroDx, 'Lewy body disease');
+
+pDNeuro=contains(neuroDx, "Parkinson"); % these are all atypical
+
+% for dd=1:length(allDiag)
+    pt2use=   lewyBodyNeuro  ;
+    % allDiag{dd}
+    disName='Neuropath LBD';
+    plotType='both';
+    mcKeithEval(pt2use, spreadTable, disName, plotType,"Mckeith"   )
+% % end
+
+
+weirdPt= ( DemLewy & ~contains(neuroDx,"Lewy") | ( pdTest & ~contains(neuroDx,"Lewy")));
 
 
 

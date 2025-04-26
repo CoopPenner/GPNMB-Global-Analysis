@@ -3,9 +3,7 @@ function [outputArg1,outputArg2] = pathSpreadStandardTestr(pt2use, pathTable,pat
 %currently separated based on asyn pure or asyn copath
 
 %initializing all variables
-globalDx=pathTable.GlobalDx;
 snpStat=pathTable.rs199347;
-pathID=pathTable.INDDID;
 
 ceradScores=pathTable.NPCERAD;
 BraakScores=pathTable.NPBRAAK;
@@ -233,9 +231,12 @@ b.CData(1,:) = [0 0.7 .25];
 c=scatter(rand(1, sum(~remVals & underGPNMB & pt2use) )+4.5, val2Test(~remVals & underGPNMB & pt2use), 'Marker', 'o' );
 c.CData(1,:) = [0.3 0.1 .6];
 
-legend({'AA (over Production)', 'GC','GG (under Production)'}, 'FontSize', 15)
+legend({'AA (over Production)', 'AG','GG (under Production)'}, 'FontSize', 15)
 title([pathName, ' Score in ', disName, ' Patients' ], 'FontSize', 20)
 ylim([0,9])
+
+[p, ~] = ranksum(val2Test(overGPNMB'  & ~remVals' & pt2use' ), val2Test( underGPNMB' &  pt2use'  & ~remVals')   )  % Mann-Whitney U
+
 
 
 end

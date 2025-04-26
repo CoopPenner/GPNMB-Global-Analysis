@@ -93,6 +93,9 @@ figure
 subplot(1,2,1)
 snpPlotterGPNMB(GPNMBSNP,disDur, ALS, 'Disease Duration', 'ALS')
 subplot(1,2,2)
+
+
+figure
 snpPlotterGPNMB(GPNMBSNP,ageAtOnset, ALS, 'Age At Onset', 'ALS')
 % subplot(2,2,3:4)
 % [pOver, pUnder]=snpPlotterGPNMB2(GPNMBSNP, HC,ALS, 'ALS', 'rs199347', 10000,1,'true');

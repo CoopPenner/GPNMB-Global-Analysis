@@ -1,0 +1,276 @@
+#Rewriting all of the code found in "SurvivalAnalyses_ALS_Spec.m
+
+#There is only one user decision for this code on line 55,  where you opt to test some clinical value (weight or FRS)
+
+# Load necessary libraries
+library(readxl) 
+library(dplyr)
+library(lubridate)  # for time calculations
+library(lme4)
+library(dplyr)
+
+## Initializing data structures
+
+
+# Read in Excel file from INDD
+dataTable <- read_excel("/Volumes/PC60/InqueryDatasets/FinalizedSets/ALS_all_Clinical_data.xlsx")
+
+# Extract relevant columns
+ptID <- dataTable$INDDID                          # individual patient IDs
+visitDate <- dataTable$VisitDate                 # visit dates
+Weight <- dataTable$Weight                       # weight
+FRS <- dataTable$FRSTotal                        # ALSFRS score
+ageAtDeath <- dataTable$AgeatDeath               # age at death
+ageAtOnset <- dataTable$AgeatOnset               # age at Onset
+ageAtDiagnosis <- dataTable$AgeatDiagnosed       # age at Diagnosis
+bioSex <- dataTable$Sex                          # biological sex
+snp <- dataTable$rs199347                        # rs199347 stats
+geneStat <- dataTable$Mutation_Summary           # all mutations
+
+# Specifically filter for c9 
+c9Pos <- grepl("C9orf72", geneStat)             
+# Pull birthdate and test date 
+testDate <- dataTable$VisitDate
+birthDay <- dataTable$DOB
+
+# Date of tracheostomy
+trachDate <- dataTable$TracheostomyDate
+
+# Diagnostic category
+dx <- dataTable$ElEscorialVisit
+
+# Site of symptom onset
+onsetSite <- dataTable$ALSSymptomOnsetSite
+
+# Calculate age at each test (in years), accounting for leap years
+ageAtTest <- as.numeric(difftime(testDate, birthDay, units = "days")) / 365.25
+
+
+
+
+# because this is simply a means of recapitulating my main findings in R I am skipping all pilot plotting exercises see SurvivalAnalyses_ALS_Spec.m for those functions
+
+## Construct subject-level matrices for all of the values that 
+
+uniquePt <- unique(ptID)
+## User decision!!!#
+scoreToTest <- Weight  # or Weight
+
+# Initialize vectors
+N <- length(scoreToTest) # length of values
+startScoreMat <- rep(NA, N) # we want to capture starting values
+timePassedMat <- rep(NA, N) # we want to capture how much time has passed since first visit (for fitting interaction term)
+numVisits <- rep(NA, N) # we want to capture the number of visits total, we will filter out people with fewer than 3 visits
+totScoreDiffMat <- rep(NA, N) # the total change from start to end (some patients are characterized as having ALS but have no progression whatsoever for up to a decade)
+totTimePassedMat <- rep(NA, N) 
+postTrachMat <- rep(NA, N) # we will exclude 
+
+# Loop through each unique patient
+for (dd in seq_along(uniquePt)) {
+  currID <- uniquePt[dd] # ptID at play
+  idx <- ptID == currID # idx 
+  
+  datesAtPlay <- visitDate[idx]
+  scoresAtPlay <- scoreToTest[idx]
+  
+  # Skip if empty or single timepoint
+  if (length(scoresAtPlay) <= 1 || all(is.na(scoresAtPlay))) {
+    next
+  }
+  
+  # Start and end scores
+  startIdx <- which.min(datesAtPlay)
+  endIdx <- which.max(datesAtPlay)
+  startDt <- datesAtPlay[startIdx]
+  endDt <- datesAtPlay[endIdx]
+  startScore <- scoresAtPlay[startIdx]
+  endScore <- scoresAtPlay[endIdx]
+  
+  # Time passed (in months)
+  timePassed <- as.numeric(difftime(datesAtPlay, startDt, units = "days")) / 30.44
+  totTimePassed <- as.numeric(difftime(endDt, startDt, units = "days")) / 30.44
+  totScoreDiff <- endScore - startScore
+  
+  # Visits after tracheostomy
+  trachDates <- trachDate[idx]
+  if (!is.na(trachDates[1])) {
+    postTrach <- datesAtPlay > trachDates[1]
+  } else {
+    postTrach <- rep(FALSE, length(datesAtPlay))
+  }
+  
+  # Assign to output vectors
+  startScoreMat[idx] <- rep(startScore, sum(idx))
+  timePassedMat[idx] <- timePassed
+  numVisits[idx] <- rep(length(scoresAtPlay), sum(idx))
+  totTimePassedMat[idx] <- rep(totTimePassed, sum(idx))
+  totScoreDiffMat[idx] <- rep(totScoreDiff, sum(idx))
+  postTrachMat[idx] <- postTrach
+}
+
+# Replace NA in postTrachMat with FALSE
+postTrachMat[is.na(postTrachMat)] <- FALSE
+
+# Detect empty SNPs
+emptySNP <- snp == "" | is.na(snp)
+
+# Identify controls
+isControl <- grepl("Control", dx)
+
+# Construct  filter
+filter2use <- !isControl & # no controls
+  totScoreDiffMat < 0 & #only progressive patients
+  numVisits >= 3 & # must have 3 or more visits
+  !postTrachMat & # no data post tracheostomy
+  !is.na(timePassedMat) & #just removing nans and empties cause I'm paranoid (this is automatically done by glme function)
+  !emptySNP &
+  !is.na(scoreToTest) &
+  ageAtOnset >= 18 & # only people who got sick after 18 (there is 1 12 year old in the cohort, non sod1 I felt uncomfortable including them)
+  timePassedMat < 360 # I exclude timepoints after 30 years.
+
+## Build model data frame
+modelData <- data.frame(
+  ptID = factor(ptID[filter2use]),
+  timePassed = timePassedMat[filter2use],
+  Sex = factor(bioSex[filter2use]),
+  ageAtTest = ageAtTest[filter2use],
+  SNP = factor(snp[filter2use]),
+  Scores = scoreToTest[filter2use],
+  startScore = startScoreMat[filter2use],
+  ageAtDeath = ageAtDeath[filter2use],
+  numVisits = numVisits[filter2use],
+  ageAtDiagnosis = ageAtDiagnosis[filter2use]
+)
+
+# Center timePassed, this won't actually change result but I just feel more comfortable w/ interpretability to not go from comp of 0
+timeMean <- mean(modelData$timePassed, na.rm = TRUE)
+modelData$timeCentered <- modelData$timePassed - timeMean
+
+## Fit GLME models
+glme <- lmer(
+  Scores ~ 1 + Sex + startScore + ageAtTest + SNP * timeCentered + ageAtDiagnosis + (1 | ptID),
+  data = modelData,
+  REML = FALSE
+)
+
+glmeAlt <- lmer(
+  Scores ~ 1 + Sex + startScore + ageAtTest + ageAtDiagnosis + (1 | ptID),
+  data = modelData,
+  REML = FALSE
+)
+
+# Summary of full model
+summary(glme)
+
+# Compare models using likelihood ratio test
+anova(glmeAlt, glme)
+
+
+## outputting p value with permutation test based on output of model
+
+# my initial result for these tests was locked on 5/25/25 (hypothetically if p value had been borderline I could have "rerolled") but I recapitulate the code here
+set.seed(42)
+permNumber <- 1000
+permTvals <- rep(NA, permNumber)
+
+# Get the true t-value
+true_tval <- coef(summary(glme))["SNPTT:timeCentered", "t value"]
+
+for (dd in 1:permNumber) {
+  modelData$Scores <- sample(modelData$Scores)
+  
+  tryCatch({
+    glme_perm <- lmer(
+      Scores ~ 1 + Sex + startScore + ageAtDeath + SNP * timeCentered + (1 | ptID),
+      data = modelData,
+      REML = FALSE
+    )
+    perm_summary <- summary(glme_perm)
+    permTvals[dd] <- coef(perm_summary)["SNPTT:timeCentered", "t value"]
+  }, error = function(e) {
+    permTvals[dd] <- NA  # skip failed fits
+  })
+}
+
+# Filter out failed models
+valid_tvals <- permTvals[!is.na(permTvals)]
+
+# Empirical p-value
+permP <- sum(abs(valid_tvals) >= abs(true_tval)) / length(valid_tvals)
+
+cat("Permutation-based p-value:", permP, "\n")
+
+
+## ok simple model plot :) 
+
+
+library(ggplot2)
+
+# Manually extract estimates and CI bounds
+TC_estimate <- fixef(glme)["SNPCT:timeCentered"]
+TT_estimate <- fixef(glme)["SNPTT:timeCentered"]
+
+TC_CI <- confint(glme, parm = "SNPCT:timeCentered")
+TT_CI <- confint(glme, parm = "SNPTT:timeCentered")
+CC_CI <- colMeans(rbind(TC_CI, TT_CI))  # Approximate
+
+# Starting points by genotype
+startPts <- modelData %>%
+  mutate(snpStat = as.character(SNP)) %>%
+  filter(!is.na(snpStat)) %>%
+  group_by(snpStat) %>%
+  summarize(startPt = mean(startScore, na.rm = TRUE), .groups = "drop")
+
+
+# Function to compute modeled y-values 
+build_curve <- function(estimate, ci, startPt, color) {
+  x <- seq(0, 120, length.out = 100)
+  y <- estimate * x + startPt
+  ci_range <- abs(diff(ci))
+  y_lower <- y - ci_range
+  y_upper <- y + ci_range
+  
+
+  
+  data.frame(
+    x = x,
+    y = y,
+    y_lower = y_lower,
+    y_upper = y_upper,
+    group = color
+  )
+}
+
+TC_CI <- as.numeric(TC_CI)  # Drops names and matrix structure
+TT_CI <- as.numeric(TT_CI)
+
+
+# Generate curves
+df_CC <- build_curve(0, CC_CI, startPts$startPt[startPts$snpStat == "CC"], "CC")
+df_CT <- build_curve(TC_estimate, TC_CI, startPts$startPt[startPts$snpStat == "CT"], "CT")
+df_TT <- build_curve(TT_estimate, TT_CI, startPts$startPt[startPts$snpStat == "TT"], "TT")
+
+plot_data <- bind_rows(df_CC, df_CT, df_TT)
+
+# Color map
+colors <- c("CC" = "cyan", "CT" = "magenta", "TT" = "green")
+
+# Plot
+ggplot(plot_data, aes(x = x, y = y, color = group, fill = group)) +
+  geom_line(size = 1.2) +
+  geom_ribbon(aes(ymin = y_lower, ymax = y_upper), alpha = 0.2, color = NA) +
+  labs(
+    title = "Modeled ALSFRS by rs199347 Status",
+    x = "Time (Months)",
+    y = "Predicted ALSFRS",
+    color = "Genotype",
+    fill = "Genotype"
+  ) +
+  theme_minimal(base_size = 16) +
+  scale_color_manual(values = colors) +
+  scale_fill_manual(values = colors)
+
+
+
+
+

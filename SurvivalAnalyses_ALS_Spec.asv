@@ -16,12 +16,14 @@ bioSex = dataTable.Sex; %biological sex
 snp = dataTable.rs199347; %rs199347 stats
 geneStat = dataTable.Mutation_Summary; % all mutations
 c9Pos = contains(geneStat, 'C9orf72'); %specifically filtering for c9
-testDate = dataTable.VisitDate; %test date
-birthDay = dataTable.DOB; % patient bday
-trachDate = dataTable.TracheostomyDate; % date of tracheostomy, (I will exclude timepoints after this)
-dx = dataTable.ElEscorialVisit; % some non-ALS patients in the mix
-onsetSite = dataTable.ALSSymptomOnsetSite; % onset site
-% Time in years at each test date account for leap year!
+testDate = dataTable.VisitDate;
+birthDay = dataTable.DOB;
+trachDate = dataTable.TracheostomyDate;
+BMI = dataTable.BMI;
+UMNTotal = dataTable.UMNTotal;
+dx = dataTable.ElEscorialVisit;
+onsetSite = dataTable.ALSSymptomOnsetSite;
+% Time in years at each test date account for leap year
 ageAtTest = days(testDate - birthDay) / 365.25;
 
 
@@ -154,7 +156,7 @@ for dd = 1:length(uniquePt)
     postTrachMat(idx) = postTrach;
 end
 
-%% Filter observations
+% Filter observations
 
 
 postTrachMat(isnan(postTrachMat)) = false;
@@ -169,10 +171,10 @@ filter2use = ~isControl & ... %no control patients
              ~isnan(timePassedMat) & ... %nans
              ~emptySNP & ...
              ~isnan(scoreToTest) & ...
-              ageAtOnset>=18; % there was one patient who they claim got symptoms at 12, not SOD1,I didn't feel comfortable including
+              ageatDiag>=18; % there was one 12 year old in the dataset who I didn't feel comfortable including
               timePassedMat < 360; % I cut off timepoints past 30 years 
 
-%% Build table and run model
+% Build  table
 modelData = table( ...
     categorical(string(ptID(filter2use))), ...
     timePassedMat(filter2use), ...
@@ -410,14 +412,24 @@ plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
 
 
 
+
+
 TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+
 snpStat=dataTable.rs199347;
+
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
 
 
     
     colorCode=[0,1,0];
 plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
+
+
+
+
+
+
 
 
 
