@@ -16,14 +16,12 @@ bioSex = dataTable.Sex; %biological sex
 snp = dataTable.rs199347; %rs199347 stats
 geneStat = dataTable.Mutation_Summary; % all mutations
 c9Pos = contains(geneStat, 'C9orf72'); %specifically filtering for c9
-testDate = dataTable.VisitDate;
-birthDay = dataTable.DOB;
-trachDate = dataTable.TracheostomyDate;
-BMI = dataTable.BMI;
-UMNTotal = dataTable.UMNTotal;
-dx = dataTable.ElEscorialVisit;
-onsetSite = dataTable.ALSSymptomOnsetSite;
-% Time in years at each test date account for leap year
+testDate = dataTable.VisitDate; %test date
+birthDay = dataTable.DOB; % patient bday
+trachDate = dataTable.TracheostomyDate; % date of tracheostomy, (I will exclude timepoints after this)
+dx = dataTable.ElEscorialVisit; % some non-ALS patients in the mix
+onsetSite = dataTable.ALSSymptomOnsetSite; % onset site
+% Time in years at each test date account for leap year!
 ageAtTest = days(testDate - birthDay) / 365.25;
 
 
@@ -156,7 +154,7 @@ for dd = 1:length(uniquePt)
     postTrachMat(idx) = postTrach;
 end
 
-% Filter observations
+%% Filter observations
 
 
 postTrachMat(isnan(postTrachMat)) = false;
@@ -171,10 +169,10 @@ filter2use = ~isControl & ... %no control patients
              ~isnan(timePassedMat) & ... %nans
              ~emptySNP & ...
              ~isnan(scoreToTest) & ...
-              ageatDiag>=18; % there was one 12 year old in the dataset who I didn't feel comfortable including
+              ageAtOnset>=18; % there was one patient who they claim got symptoms at 12, not SOD1,I didn't feel comfortable including
               timePassedMat < 360; % I cut off timepoints past 30 years 
 
-% Build  table
+%% Build table and run model
 modelData = table( ...
     categorical(string(ptID(filter2use))), ...
     timePassedMat(filter2use), ...
@@ -235,7 +233,12 @@ for dd=1:length(allPt)
 GPNMBSNP{dd} = char(unique(string(modelData.SNP(modelData.ptID == allPt(dd)))));
 Sexsimple{dd}=char(unique(string(modelData.Sex(modelData.ptID == allPt(dd)))));
 geneTot{dd}= char(unique(string(geneStat(modelData.ptID == allPt(dd)))));
-    
+allOnset(dd)
+if ~isnan((modelData.ageAtDiagnosis(modelData.ptID==allPt(dd))))
+disDurTot(dd)=unique(modelData.ageAtDiagnosis(modelData.ptID==allPt(dd)));
+else
+    disDurTot(dd)=nan;
+end
     if ~isempty(geneTot{dd}) & size(geneTot{dd},1)>1
         
     geneCatch=geneTot{dd}; geneTot{dd}=geneCatch(2,:)
@@ -358,6 +361,8 @@ grid on;
 
 %% ok coolio but let's be very hardcore w/ a permutation test on this glme
 
+rng(42);  % set seed for reproducibility, can't reroll :) 
+
 
 permNumber=1000;
 
@@ -378,7 +383,7 @@ permMat(dd)=falsePval.pValue;
 
     %update this!!
 permP=sum(permMat< pValTrue)/(permNumber-7); %this is ridiculous but I'm too lazy right now to capture the situations where a model can't converge, so I just manually enter it based on warnings
-%locked on 4/25/25
+
 
 %% simple glme plot
 
@@ -412,24 +417,14 @@ plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
 
 
 
-
-
 TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
-
 snpStat=dataTable.rs199347;
-
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
 
 
     
     colorCode=[0,1,0];
 plotGLMESlope(TTestimate, TTLowerCI, TTupperCI,startPt,colorCode)
-
-
-
-
-
-
 
 
 
@@ -454,11 +449,11 @@ for gg = 1:length(uniquePatients)
     
 if isempty(snpStatus{1})
         snpStatAtPlay=nan;
-    elseif snpStatus{1}=='CC'
+    elseif strcmp(snpStatus{1}, 'CC')
     snpStatAtPlay=0;
-    elseif snpStatus{1}=='CT'
+    elseif strcmp(snpStatus{1}, 'CT')
     snpStatAtPlay=1;
-    elseif snpStatus{1}=='TT'
+    elseif strcmp(snpStatus{1}, 'TT')
     snpStatAtPlay=2;
 end
 
@@ -502,10 +497,10 @@ end
         sexAtPlay=nan;
     end
 
-    if ~isnat(onsetDate(1))
-        date2use=onsetDate;
-    elseif isnat(onsetDate(1)) && ~isnat(diagDate(1))
-    date2use=diagDate;
+    if ~isnat(diagDate(1))
+        date2use=diagDate;
+    elseif isnat(diagDate(1)) && ~isnat(onsetDate(1))
+    date2use=onsetDate;
     else
         date2use=NaT;
     end
@@ -530,21 +525,19 @@ avgAge= (ageAtDeath+ageatDiag)/2;
     % Store results in summary matrix
 
     
-sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,ageAtDeath, sexAtPlay,length(patientData.Sex), ageatDiag] ];
+sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,ageAtDeath, sexAtPlay] ];
 
 
 end
 
 
-remValz=isnan(mean( sumMat,2)) | sumMat(:,7)<18 | sumMat(:,3) >360; % cutting things off at 30 years
+remValz=isnan(mean( sumMat,2)) | sumMat(:,3) >360; % cutting things off at 30 years
 snpAtPlay=sumMat(~remValz,2);
 eventAtPlay=sumMat(~remValz,3);
-zScoreAge=zscore(sumMat(~remValz,4) );
+zScoreAge=(sumMat(~remValz,4) );
 snpStat=sumMat(~remValz,2);
 sexStat=sumMat(~remValz,5);
-numVis=sumMat(~remValz,6);
-ageatDiag=sumMat(~remValz,7);
-
+firstTest=sumMat(~remValz,6);
 [b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 )  );
 
 % Compute hazard ratio
@@ -572,14 +565,19 @@ for gg = 1:length(uniqueSNPs)
 
     idx = (sumMat(~remValz,2) == snpValue);
     survTimes = sumMat(idx,3); % Survival times
+    ageAtPlay=sumMat(idx,4);
+    sexAtPlay=sumMat(idx,5);
+
     eventOccurred = ones(size(survTimes  )); % Assume all events are observed since we remove nans... 
 
     % Fit Cox model only for this SNP group
-    [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
+    %[~, ~, H, ~] = coxphfit([ageAtPlay,sexAtPlay], survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
+   [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
 
 
-    length(survTimes)
-    % Plot survival curve
+tesstVect=[H(:,1),exp(-H(:,2))];
+
+% Plot survival curve
     stairs(H(:,1), exp(-H(:,2)), 'Color', colors{gg}, 'LineWidth', 2);
 end
 

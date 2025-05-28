@@ -233,7 +233,12 @@ for dd=1:length(allPt)
 GPNMBSNP{dd} = char(unique(string(modelData.SNP(modelData.ptID == allPt(dd)))));
 Sexsimple{dd}=char(unique(string(modelData.Sex(modelData.ptID == allPt(dd)))));
 geneTot{dd}= char(unique(string(geneStat(modelData.ptID == allPt(dd)))));
-    
+allOnset(dd)
+if ~isnan((modelData.ageAtDiagnosis(modelData.ptID==allPt(dd))))
+disDurTot(dd)=unique(modelData.ageAtDiagnosis(modelData.ptID==allPt(dd)));
+else
+    disDurTot(dd)=nan;
+end
     if ~isempty(geneTot{dd}) & size(geneTot{dd},1)>1
         
     geneCatch=geneTot{dd}; geneTot{dd}=geneCatch(2,:)
@@ -356,6 +361,8 @@ grid on;
 
 %% ok coolio but let's be very hardcore w/ a permutation test on this glme
 
+rng(42);  % set seed for reproducibility, can't reroll :) 
+
 
 permNumber=1000;
 
@@ -376,7 +383,7 @@ permMat(dd)=falsePval.pValue;
 
     %update this!!
 permP=sum(permMat< pValTrue)/(permNumber-7); %this is ridiculous but I'm too lazy right now to capture the situations where a model can't converge, so I just manually enter it based on warnings
-%locked on 4/25/25
+
 
 %% simple glme plot
 
@@ -385,10 +392,10 @@ permP=sum(permMat< pValTrue)/(permNumber-7); %this is ridiculous but I'm too laz
 figure;
     hold on;
 
-TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
-TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
-TTLowerCI=glme.Coefficients(9,7); TTLowerCI=TTLowerCI.Lower;
-TTupperCI=glme.Coefficients(9,8); TTupperCI=TTupperCI.Upper;
+TCLowerCI=glme.Coefficients(9,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(9,8); TCupperCI=TCupperCI.Upper;
+TTLowerCI=glme.Coefficients(10,7); TTLowerCI=TTLowerCI.Lower;
+TTupperCI=glme.Coefficients(10,8); TTupperCI=TTupperCI.Upper;
 
 CCupperCI=mean([TTupperCI,TCupperCI]);
 CCLowerCI=mean([TTLowerCI,TCLowerCI]);
@@ -403,14 +410,14 @@ plotGLMESlope(CCestimate, CCLowerCI, CCupperCI,startPt,colorCode)
 
 
 
-TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
+TCestimate=glme.Coefficients(9,2); TCestimate=TCestimate.Estimate;
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
 colorCode=[1,0,1];
 plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
 
 
 
-TTestimate=glme.Coefficients(9,2); TTestimate=TTestimate.Estimate;
+TTestimate=glme.Coefficients(10,2); TTestimate=TTestimate.Estimate;
 snpStat=dataTable.rs199347;
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'TT')     ));
 
@@ -442,11 +449,11 @@ for gg = 1:length(uniquePatients)
     
 if isempty(snpStatus{1})
         snpStatAtPlay=nan;
-    elseif snpStatus{1}=='CC'
+    elseif strcmp(snpStatus{1}, 'CC')
     snpStatAtPlay=0;
-    elseif snpStatus{1}=='CT'
+    elseif strcmp(snpStatus{1}, 'CT')
     snpStatAtPlay=1;
-    elseif snpStatus{1}=='TT'
+    elseif strcmp(snpStatus{1}, 'TT')
     snpStatAtPlay=2;
 end
 
@@ -490,10 +497,10 @@ end
         sexAtPlay=nan;
     end
 
-    if ~isnat(onsetDate(1))
-        date2use=onsetDate;
-    elseif isnat(onsetDate(1)) && ~isnat(diagDate(1))
-    date2use=diagDate;
+    if ~isnat(diagDate(1))
+        date2use=diagDate;
+    elseif isnat(diagDate(1)) && ~isnat(onsetDate(1))
+    date2use=onsetDate;
     else
         date2use=NaT;
     end
@@ -518,21 +525,19 @@ avgAge= (ageAtDeath+ageatDiag)/2;
     % Store results in summary matrix
 
     
-sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,ageAtDeath, sexAtPlay,length(patientData.Sex), ageatDiag] ];
+sumMat=[sumMat; [patientID,snpStatAtPlay,timeToEvent,ageAtDeath, sexAtPlay] ];
 
 
 end
 
 
-remValz=isnan(mean( sumMat,2)) | sumMat(:,7)<18 | sumMat(:,3) >360; % cutting things off at 30 years
+remValz=isnan(mean( sumMat,2)) | sumMat(:,3) >360; % cutting things off at 30 years
 snpAtPlay=sumMat(~remValz,2);
 eventAtPlay=sumMat(~remValz,3);
-zScoreAge=zscore(sumMat(~remValz,4) );
+zScoreAge=(sumMat(~remValz,4) );
 snpStat=sumMat(~remValz,2);
 sexStat=sumMat(~remValz,5);
-numVis=sumMat(~remValz,6);
-ageatDiag=sumMat(~remValz,7);
-
+firstTest=sumMat(~remValz,6);
 [b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 )  );
 
 % Compute hazard ratio
@@ -560,14 +565,19 @@ for gg = 1:length(uniqueSNPs)
 
     idx = (sumMat(~remValz,2) == snpValue);
     survTimes = sumMat(idx,3); % Survival times
+    ageAtPlay=sumMat(idx,4);
+    sexAtPlay=sumMat(idx,5);
+
     eventOccurred = ones(size(survTimes  )); % Assume all events are observed since we remove nans... 
 
     % Fit Cox model only for this SNP group
-    [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
+    %[~, ~, H, ~] = coxphfit([ageAtPlay,sexAtPlay], survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
+   [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
 
 
-    length(survTimes)
-    % Plot survival curve
+tesstVect=[H(:,1),exp(-H(:,2))];
+
+% Plot survival curve
     stairs(H(:,1), exp(-H(:,2)), 'Color', colors{gg}, 'LineWidth', 2);
 end
 
