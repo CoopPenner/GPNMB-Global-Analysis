@@ -1,9 +1,9 @@
-function [cleanedMask,CC] = scratchMaskMaker(frameAtPlay,minSize, maxSize, circCut, detectSensitivity,strelRadiusSize,demoPlot)
+function [cleanedMask,CC,nucFeatures] = scratchMaskMaker(frameAtPlay,minSize, maxSize, circCut, detectSensitivity,strelRadiusSize,demoPlot)
 
 
 
 %convert to grayscale if necessary
-        if size(Image,3)==3
+        if size(frameAtPlay,3)==3
         frameAtPlay=rgb2gray(frameAtPlay);
         warning('running algorithm on rgb image, consider using only nuclear channel')
         end
@@ -23,6 +23,7 @@ nuclearMaskClosed = imclose(nuclearMaskOpened, se);  % then close gaps
 % Apply initial size filtering
 cleanedMask = bwareaopen(nuclearMaskClosed, minSize);
 
+
 % Get connected components and nuclear features
 CC = bwconncomp(cleanedMask);
 nucFeatures = regionprops("table", CC, ...
@@ -33,7 +34,7 @@ areaAtPlay = nucFeatures.Area;
 circ = nucFeatures.Circularity;
 
 % Define  nuclei more likely to be artifactual
-badIdx = areaAtPlay > maxSize & circ < circCut;
+badIdx = areaAtPlay > maxSize | circ < circCut;
 % how I calculate distance
 
 
@@ -42,6 +43,22 @@ labeledMask = labelmatrix(CC);
 for ss = find(badIdx)'
     cleanedMask(labeledMask == ss) = 0;
 end
+
+
+% regenerate connected components
+
+
+CC = bwconncomp(cleanedMask);
+
+nucFeatures = regionprops("table", CC, ...
+    "Area", "Centroid", "EquivDiameter", "Solidity", "Circularity","PixelIdxList","PixelList");
+
+
+
+
+
+
+
 
 if demoPlot
 

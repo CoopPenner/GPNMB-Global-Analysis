@@ -497,10 +497,10 @@ end
         sexAtPlay=nan;
     end
 
-    if ~isnat(diagDate(1))
-        date2use=diagDate;
-    elseif isnat(diagDate(1)) && ~isnat(onsetDate(1))
-    date2use=onsetDate;
+    if ~isnat(onsetDate(1))
+        date2use=onsetDate;
+    % elseif isnat(diagDate(1)) && ~isnat(onsetDate(1))
+    % date2use=onsetDate;
     else
         date2use=NaT;
     end
@@ -532,13 +532,11 @@ end
 
 
 remValz=isnan(mean( sumMat,2)) | sumMat(:,3) >360; % cutting things off at 30 years
-snpAtPlay=sumMat(~remValz,2);
 eventAtPlay=sumMat(~remValz,3);
 zScoreAge=(sumMat(~remValz,4) );
 snpStat=sumMat(~remValz,2);
 sexStat=sumMat(~remValz,5);
-firstTest=sumMat(~remValz,6);
-[b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 )  );
+[b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 ),'Censoring', eventAtPlay>36 );
 
 % Compute hazard ratio
 HR = exp(stats.beta);  

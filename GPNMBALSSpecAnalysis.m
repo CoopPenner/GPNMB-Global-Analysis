@@ -1,4 +1,4 @@
-a%ALS comprehensive GPNMB eval
+%ALS comprehensive GPNMB eval
 
 
 clinDataTot=readtable('/Volumes/PC60/InqueryDatasets/ALS_Comprehensive_inquery_output.xlsx');
