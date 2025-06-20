@@ -1,10 +1,10 @@
 %basic check of rs199347 frequency and cognitive decline
 
-addpath('/Users/pennerc/Documents/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis')
+addpath('/Users/pennerc/Documents/Documents - BGS-STU23-138/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis');
 
 
 %% reading in data
-dataTable=readtable('/Users/pennerc/Downloads/InqueryDatasets/FinalizedSets/ADC_MMSE_TotalPatients.xlsx');
+dataTable=readtable('/Users/pennerc/Downloads/InqueryDatasets/FinalizedSets/ADC_MMSE_TotalPatients_withUpdate.xlsx');
 
 %dataTable=readtable('/Users/pennerc/Downloads/InqueryDatasets/AllPatients_extraSNP_withMMSE.xlsx');
 
@@ -33,7 +33,7 @@ apoeHaplo=dataTable.APOE;
 snpGroups = {'TT', 'CT', 'CC'};
 colors = lines(3); % for SNPs
 dxGroups = {'Normal', 'MCI', 'Alzheimer'}; % for labeling
-dxMarkers = ["normal", "mci", "ad"]; % strings to match
+dxMarkers = ["normal", "mci -memory", "ad"]; % strings to match
 
 for dxType = 1:3 % we iterate through each diagnosis subtype
     figure;
@@ -55,11 +55,11 @@ for dxType = 1:3 % we iterate through each diagnosis subtype
 
             % Check if diagnosis matches current group this is probably not
             % the most efficient way to implement this...
-            if ~contains(dxString, dxMarkers(dxType))
+            if ~contains(dxString, 'mci') && ~contains(dxString, '- memory')
                 continue;
             end
 
-            if sum(ptIdx) > 2 % if there are at least 3 visits
+            if sum(ptIdx) > 1 % if there are at least 3 visits
               
                  datesAtPlay = datenum(testDate(ptIdx)); 
                 scoresAtPlay = cogScore(ptIdx);
@@ -111,7 +111,7 @@ for dd = 1:length(singleID)
     datesAtPlay = testDate(idxAtPlay);
     scoresAtPlay = scoreToTest(idxAtPlay);
 
-    if isempty(scoresAtPlay) || isscalar(scoresAtPlay)
+    if isempty(scoresAtPlay) || length(scoresAtPlay)<3
         continue;
     end
 
@@ -136,9 +136,9 @@ end
 
 % Filter for analysis
 emptySNP = cellfun(@isempty, snp);
-filter2use = contains(lower(dx), 'ad') & ... % only alzheimers patients
+filter2use = contains(dx,'AD')&...%contains(dx, 'MCI') & contains(dx, ' - memory')& ... % only mci patients
              scoreToTest <= 30 & ... % I filter for this in the above code but it made me paranoid so I included it here too lol
-             startScoreMat >= 14 & ... % patients that begin at the cutoff for "moderate dementia" are excluded
+             startScoreMat >= 10 & ... % patients that begin at the cutoff for "moderate dementia" are excluded
              ~isnan(scoreToTest) & ... % obviously we need scores
              ~emptySNP; % and geneotypes
 
@@ -154,8 +154,8 @@ modelData = table( ...
     'VariableNames', {'ptID', 'timePassed', 'Sex', 'ageAtTest', 'SNP', 'Scores', 'startScore'} ...
 );
 
-modelData.SNP = reordercats(modelData.SNP, {'TT', 'CT', 'CC'});
-
+  modelData.SNP = reordercats(modelData.SNP, {'TT', 'CT', 'CC'});
+% modelData.SNP = reordercats(modelData.SNP, {'AA', 'AC', 'CC'});
 
 % Fit GLME  and alt model
 glme = fitglme(modelData, ...
@@ -172,9 +172,9 @@ compare(glmeAlt, glme);
 %% simple glme plot
 
 
-CCLowerCI=glme.Coefficients(13,7); CCLowerCI=CCLowerCI.Lower;
-CCupperCI=glme.Coefficients(13,8); CCupperCI=CCupperCI.Upper;
-CCEstimate=glme.Coefficients(13,2); CCEstimate=CCEstimate.Estimate;
+CCLowerCI=glme.Coefficients(9,7); CCLowerCI=CCLowerCI.Lower;
+CCupperCI=glme.Coefficients(9,8); CCupperCI=CCupperCI.Upper;
+CCEstimate=glme.Coefficients(9,2); CCEstimate=CCEstimate.Estimate;
 
 snpStat=snp;
 
@@ -187,9 +187,9 @@ startPt= nanmean(startScoreMat(    strcmp(snpStat,'CC')     ));
 plotGLMESlope(CCEstimate, CCLowerCI, CCupperCI,startPt,colorCode)
 
 
-TCLowerCI=glme.Coefficients(12,7); TCLowerCI=TCLowerCI.Lower;
-TCupperCI=glme.Coefficients(12,8); TCupperCI=TCupperCI.Upper;
-TCestimate=glme.Coefficients(12,2); TCestimate=TCestimate.Estimate;
+TCLowerCI=glme.Coefficients(8,7); TCLowerCI=TCLowerCI.Lower;
+TCupperCI=glme.Coefficients(8,8); TCupperCI=TCupperCI.Upper;
+TCestimate=glme.Coefficients(8,2); TCestimate=TCestimate.Estimate;
 startPt= nanmean(startScoreMat(    strcmp(snpStat,'CT')     ));
 colorCode=[.9,.4,.3];
 plotGLMESlope(TCestimate, TCLowerCI, TCupperCI,startPt,colorCode)
@@ -206,7 +206,7 @@ legend({'CC','','CT','','TT'},'FontSize',20);
 xlabel('Time (Months)','FontSize',20);
 ylabel('Modeled MMSE','FontSize',20)
 
-title('Modeled MMSE Slope as a function of rs199347 status in AD patients','FontSize',20)
+title('Modeled MMSE Slope as a function of rs199347 status in MCI patients','FontSize',20)
 
 
 %% plotting residuals etc

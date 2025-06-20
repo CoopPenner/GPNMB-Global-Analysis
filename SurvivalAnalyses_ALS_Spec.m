@@ -536,7 +536,7 @@ eventAtPlay=sumMat(~remValz,3);
 zScoreAge=(sumMat(~remValz,4) );
 snpStat=sumMat(~remValz,2);
 sexStat=sumMat(~remValz,5);
-[b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 ),'Censoring', eventAtPlay>36 );
+[b,logL,H,stats] = coxphfit( [snpStat,zScoreAge,sexStat] ,sumMat(~remValz,3 ),'Censoring', eventAtPlay>60 );
 
 % Compute hazard ratio
 HR = exp(stats.beta);  
@@ -562,15 +562,15 @@ for gg = 1:length(uniqueSNPs)
     % Filter data for the current SNP group
 
     idx = (sumMat(~remValz,2) == snpValue);
-    survTimes = sumMat(idx,3); % Survival times
+    survTimes = sumMat(idx,3); % Survival timesclc
     ageAtPlay=sumMat(idx,4);
     sexAtPlay=sumMat(idx,5);
 
     eventOccurred = ones(size(survTimes  )); % Assume all events are observed since we remove nans... 
 
     % Fit Cox model only for this SNP group
-    %[~, ~, H, ~] = coxphfit([ageAtPlay,sexAtPlay], survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
-   [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', 1-eventOccurred); %I'm just forcing a fit here for the purposes of plotting
+    [~, ~, H, ~] = coxphfit([ageAtPlay,sexAtPlay], survTimes , 'Censoring', survTimes>72); %I'm just forcing a fit here for the purposes of plotting
+   % [~, ~, H, ~] = coxphfit(ones(size(survTimes )), survTimes , 'Censoring', survTimes>36); %I'm just forcing a fit here for the purposes of plotting
 
 
 tesstVect=[H(:,1),exp(-H(:,2))];
