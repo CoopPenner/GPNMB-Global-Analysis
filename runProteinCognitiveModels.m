@@ -1,0 +1,200 @@
+function [pValSlope, pValTot] = runProteinCognitiveModels(usableGenes, easyAccessData, genePres, origNames, refTable, score2test, modelType,protID,normFactor,sampleDate)
+
+% Load test data based on score
+switch score2test
+    case 1
+        testData = readtable('/Volumes/PC60/InqueryDatasets/FinalizedSets/upDALL_CognitiveTesting.xlsx');
+        testScore = testData.DRSTotalAge;
+        testDate = testData.TestDate;
+    case 2
+        testData = readtable('/Volumes/PC60/InqueryDatasets/FinalizedSets/upDALL_MotorTesting.xlsx');
+        testScore = testData.P3Total;
+        testDate = testData.VisitDate;
+end
+
+
+%%
+
+
+ageAtTest=testData.AgeatTest;
+bioSex=testData.Sex;
+dxAtPlay=testData.MotorDx1;
+
+%getting the values we'll need for our model
+timePassed = nan(height(testData),1);
+startScoreMat = nan(height(testData),1);
+numVisits = nan(height(testData),1);
+singleIDs = unique(testData.INDDID);
+for tt = 1:length(singleIDs)
+    pt = singleIDs(tt);
+    testIdx = testData.INDDID == pt;
+    protIdx= (protID==pt);
+
+
+                  
+try
+    if sum(testIdx) < 3 || sum(protIdx)==0, continue; end % less than 3 visits
+          sampleDateatPlay=sampleDate(protIdx);
+
+    dates = testDate(testIdx);
+    scores = testScore(testIdx);
+    
+     scores=scores(dates>sampleDateatPlay(1));
+     dates=dates(dates>sampleDateatPlay(1));
+    [startDate, loc] = min(dates);
+    timeMonths = days(dates - startDate) / 30.44;
+    timePassed(testIdx) = timeMonths;
+    startScoreMat(testIdx) = scores(loc);
+    numVisits(testIdx) = sum(testIdx);
+catch
+    b=1;
+end
+     
+
+
+end
+
+%%
+% Now match protein-level data by INDDID
+
+pValSlope = nan(1, sum(genePres));
+pValTot = nan(1, sum(genePres));
+
+validFilter =  numVisits > 3 & contains(dxAtPlay, 'Parkinson') 
+
+
+for tt = 1:sum(genePres) %big for loop over each of our genes
+    
+      geneName = usableGenes{tt}
+        origLoc= strcmp(geneName,origNames);
+
+
+ protVec = table2array(easyAccessData(:,origLoc));
+protVec(protVec < 0) = 0;
+
+
+
+                slopes = [];
+                sexVals = {};
+                ageVals = [];
+                protVals = [];
+                ids = [];
+                startScore=[];
+                normScore=[];
+
+                countr=1; 
+             for vv = 1:length(singleIDs)
+
+                pt = singleIDs(vv);
+                testIdx = find(testData.INDDID == pt & validFilter);
+                protIdx= (protID==pt);
+
+                    if length(testIdx) > 3 && sum(protIdx>0)
+                    dates = testDate(testIdx);
+                    scores = testScore(testIdx);
+                    sampleDateatPlay=sampleDate(protIdx);
+
+                  scores=scores(dates>sampleDateatPlay(1));
+     dates=dates(dates>sampleDateatPlay(1));
+
+                    timeMonths = days(dates - min(dates)) / 30.44;
+                    coeffs = polyfit(timeMonths, scores, 1);
+                    slopes(countr) = coeffs(1);
+                    protVals(countr) = nanmean(protVec(protIdx));
+                    sexVals{countr} = (bioSex{testIdx(1)}    );
+                    ageVals(countr) = nanmean(ageAtTest(testIdx));
+                    startScore(countr)=unique(startScoreMat(testIdx));
+                    normScore(countr)=nanmean(normFactor(protIdx));
+                    ids(countr) = pt;
+                    countr=countr+1;
+                    end
+         
+                end
+
+
+
+
+                modelDataSlope = table(categorical((ids))', ...
+                                  slopes', ...
+                                  categorical(sexVals)', ...
+                                  normScore',...
+                                  startScore',...
+                                  ageVals', ...
+                                  protVals', ...
+                                  'VariableNames', {'ID', 'Slope', 'Sex', 'NormFactor','StartScore', 'Age', 'Protein'});
+
+                formula = 'Slope ~ 1 + Sex + NormFactor+ StartScore+ Age + Protein + (1|ID)';
+                term = 'Protein';
+
+       glme = fitglme(modelDataSlope, formula, 'Distribution','normal','Link','identity');
+        rowIdx = find(contains(glme.Coefficients.Name, term));
+        pValSlope(tt) = glme.Coefficients.pValue(rowIdx);
+        disp(glme)
+
+
+%% 
+
+                % Use all timepoints from patients with protein data
+everyID = (testData.INDDID);
+
+
+
+protExtend=nan(1, length(testScore));
+normExtend=nan(1, length(testScore));
+
+        for ff=1:length(singleIDs)
+   pt = singleIDs(ff);
+    testIdx = testData.INDDID == pt;
+    protIdx=protID==pt;
+
+            if sum(protIdx)>0
+            protExtend(testIdx)=nanmean(protVec(protIdx));
+            normExtend(testIdx)=nanmean(normFactor(protIdx));
+            end
+
+
+
+        end
+
+
+validFilter =  numVisits > 3 & contains(dxAtPlay, 'Parkinson') & startScoreMat>6 & ~isnan(protExtend)';
+
+
+
+
+                modelDataTot = table(categorical(everyID(validFilter)), ...
+                                  testScore(validFilter), ...
+                                  categorical(bioSex(validFilter)), ...
+                                  ageAtTest(validFilter), ...
+                                  startScoreMat(validFilter), ...
+                                  timePassed(validFilter),...
+                                  protExtend(validFilter)', ...
+                                  normExtend(validFilter)', ...
+                                  'VariableNames', {'ID', 'Score', 'Sex', 'AgeatTest',...
+                                  'StartScore', 'Time', 'Protein','normFactor'});
+
+                formula = 'Score ~ 1 + Sex + AgeatTest + StartScore+normFactor+ Protein * Time + (1|ID)';
+                term = 'Time:Protein';
+
+        glme = fitglme(modelDataTot, formula, 'Distribution','normal','Link','identity');
+        rowIdx = find(contains(glme.Coefficients.Name, term));
+        pValTot(tt) = glme.Coefficients.pValue(rowIdx);
+        disp(glme)
+
+
+
+
+
+
+                % % FDR correction
+                % qVals = bh_fdr(pValTot);
+                % for rr = 1:length(results)
+                %     results(rr).qValue = qVals(rr);
+                % end
+
+
+end
+
+
+
+end

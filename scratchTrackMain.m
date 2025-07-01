@@ -7,13 +7,13 @@
 addpath('/Users/pennerc/Documents/Documents - BGS-STU23-138/MATLAB/GPNMB_Global_Analysis/GPNMB-Global-Analysis');
 % first upload relevant video
 
-homePath= '/Volumes/PC60/iMicroVids/WT_ScratchAssay_6_6_25_allChannels_Scale/WT_aB'; %Link the folder containing all videos;
+homePath= '/Volumes/PC60/iMicroVids/KOScratchAssay_6_6_25_allChannels/KO_aB'; %Link the folder containing all videos;
 
 
         %all videos are saved in the following way Genotype_ImageType_Treatment
 % (a space) (number of video).mp4
 % so for example: KO_Scratch_aB (1).mp4   Note the space between aB and (1)
-genoTypePrefix='WT';
+genoTypePrefix='KO';
 imageTypePrefix='Scratch';
 treatmentPrefix='aB';
 
